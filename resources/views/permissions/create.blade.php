@@ -1,0 +1,32 @@
+@extends('layouts.admin')
+@section('content')
+<div class="content-wrapper">
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="h4">Create Permissions</h2>
+        <a href="{{ route('permissions.index') }}" class="btn btn-secondary">Back</a>
+    </div>
+
+    {{-- Success Message --}}
+    @if (session('success'))
+        <div class="alert alert-success">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    <div class="card">
+        <div class="card-body">
+            <form action="{{ route('permissions.store') }}" method="post">
+                @csrf
+                <div class="mb-3">
+                    <label for="name" class="form-label">Permission Name</label>
+                    <input type="text" name="name" id="name" class="form-control" placeholder="Enter permission name">
+                </div>
+
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+@endsection
