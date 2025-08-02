@@ -77,25 +77,25 @@
 </li>
 
        <li class="nav-item">
-    <a href="/users" class="nav-link {{ request()->is('users') ? 'active' : '' }}">
+    <a href="/users" class="nav-link {{ request()->is('users','create-user') ? 'active' : '' }}">
         <i class="nav-icon fas fa-users"></i>
         <p>Manage Users</p>
     </a>
 </li>
        <li class="nav-item">
-    <a href="/trips" class="nav-link {{ request()->is('trips') ? 'active' : '' }}">
+    <a href="/trips" class="nav-link {{ request()->is('trips','create-trip') ? 'active' : '' }}">
         <i class="nav-icon fas fa-plane"></i>
         <p>Trips</p>
     </a>
 </li>
        <li class="nav-item">
-    <a href="/agents" class="nav-link {{ request()->is('agents') ? 'active' : '' }}">
+    <a href="/agents" class="nav-link {{ request()->is('agents','create-agent') ? 'active' : '' }}">
         <i class="nav-icon fas fa-user-tie"></i>
         <p>Agents</p>
     </a>
 </li>
        <li class="nav-item">
-    <a href="#" class="nav-link {{ request()->is('') ? 'active' : '' }}">
+    <a href="/finances" class="nav-link {{ request()->is('finances') ? 'active' : '' }}">
         <i class="nav-icon fas fa-credit-card"></i>
         <p>Finances</p>
     </a>

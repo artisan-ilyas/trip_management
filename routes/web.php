@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/users', [AdminController::class, 'index'])->name('users.index');
     Route::get('/create-user', [AdminController::class, 'create'])->name('users.create');
     Route::post('/store-user', [AdminController::class, 'store'])->name('users.store');
-     Route::post('users/{id}', [AdminController::class, 'update'])->name('users.update');
+    Route::post('users/{id}', [AdminController::class, 'update'])->name('users.update');
     Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('users.destroy');
 
 
@@ -61,15 +61,22 @@ Route::middleware('auth')->group(function () {
     Route::get('/agents', [AdminController::class, 'index_agent'])->name('agents.index');
     Route::get('/create-agent', [AdminController::class, 'create_agent'])->name('agents.create');
     Route::post('/store-agent', [AdminController::class, 'store_agent'])->name('agent.store');
-     Route::post('agents/{id}', [AdminController::class, 'update_agent'])->name('agents.update');
+    Route::post('agents/{id}', [AdminController::class, 'update_agent'])->name('agents.update');
     Route::delete('agents/{id}', [AdminController::class, 'destroy_agent'])->name('agents.destroy');
 
      //Manage Agents
     Route::get('/trips', [AdminController::class, 'trip_index'])->name('trips.index');
     Route::get('/create-trip', [AdminController::class, 'create_trip'])->name('trips.create');
     Route::post('/store-trip', [AdminController::class, 'store_trip'])->name('trips.store');
-     Route::post('trips/{id}', [AdminController::class, 'update_trip'])->name('trips.update');
+    Route::post('trips/{id}', [AdminController::class, 'update_trip'])->name('trips.update');
     Route::delete('trips/{id}', [AdminController::class, 'destroy_trip'])->name('trips.destroy');
+
+     //Manage Finances
+    Route::get('/finances', [AdminController::class, 'finance_index'])->name('finances.index');
+    Route::get('/create-finance', [AdminController::class, 'create_finance'])->name('finances.create');
+    Route::post('/store-finance', [AdminController::class, 'store_finance'])->name('finances.store');
+    Route::post('finances/{id}', [AdminController::class, 'update_finance'])->name('finances.update');
+    Route::delete('finances/{id}', [AdminController::class, 'destroy_finance'])->name('finances.destroy');
 
 });
 

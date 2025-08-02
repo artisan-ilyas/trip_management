@@ -15,7 +15,7 @@
 
     <div class="card">
         <div class="card-body">
-            <form action="{{ route('agent.store') }}" method="POST">
+            <form action="" method="POST">
                 @csrf
 
                 <div class="row mb-3">
