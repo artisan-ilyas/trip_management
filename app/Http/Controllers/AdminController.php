@@ -268,4 +268,10 @@ public function destroy_finance($id)
 
     return redirect()->route('trips.index')->with('success', 'Trip deleted successfully.');
 }
+
+    //Guests
+     public function guest_index()  
+    {
+        return view('guests.index');
+    }
 }

@@ -95,7 +95,7 @@
     </a>
 </li>
    <li class="nav-item">
-    <a href="/agents" class="nav-link {{ request()->is('guests','') ? 'active' : '' }}">
+    <a href="/guests" class="nav-link {{ request()->is('guests','') ? 'active' : '' }}">
         <i class="nav-icon fas fa-user-friends"></i>
         <p>Guests</p>
     </a>

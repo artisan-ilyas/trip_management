@@ -37,6 +37,8 @@
           <div class="card-header bg-primary">
             <h3 class="card-title">Guest information</h3>
           </div>
+<form action="{{ route('guest.store') }}" method="POST" enctype="multipart/form-data">
+    @csrf
 <div class="card-body p-0">
   <div class="bs-stepper">
     <div class="bs-stepper-header" role="tablist">
@@ -399,7 +401,7 @@
   </div>
 </div>
 
-
+</form>
 
 
           <!-- <div class="card-footer">

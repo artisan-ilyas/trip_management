@@ -20,7 +20,7 @@ Route::get('/trips',[HomeController::class, 'trips']);
 Route::get('/blog',[HomeController::class, 'blog']);
 Route::get('/contact',[HomeController::class, 'contact']);
 
- Route::get('/guest/form/{token}', [GuestController::class, 'show'])->name('guest.form');
+    Route::get('/guest/form/{token}', [GuestController::class, 'show'])->name('guest.form');
     Route::post('/guest/form/{token}', [GuestController::class, 'submit'])->name('guest.form.submit');
 
 // web.php
@@ -85,6 +85,9 @@ Route::middleware('auth')->group(function () {
     Route::post('finances/{id}', [AdminController::class, 'update_finance'])->name('finances.update');
     Route::delete('finances/{id}', [AdminController::class, 'destroy_finance'])->name('finances.destroy');
 
+    //Manage Guests
+    Route::get('/guests', [AdminController::class, 'guest_index'])->name('guest.index');
+    Route::post('/guest-store', [GuestController::class, 'store'])->name('guest.store');
 });
 
 
