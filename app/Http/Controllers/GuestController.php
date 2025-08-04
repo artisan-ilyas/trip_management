@@ -10,6 +10,7 @@ class GuestController extends Controller
 
    public function store(Request $request)
     {
+        // dd($request);
         // $request->validate([
         //     'name' => 'required',
         //     'gender' => 'required',
@@ -30,6 +31,7 @@ class GuestController extends Controller
         // ]);
 
         $guest = Guest::create([
+            'trip_id' => $request->trip_id,
             'name' => $request->name,
             'gender' => $request->gender,
             'email' => $request->email,
@@ -94,24 +96,25 @@ class GuestController extends Controller
         }
 
         return redirect()->back()->with('success', 'Guest form submitted successfully.');
-    } 
- public function show($token)
-{
-    $trip = Trip::where('guest_form_token', $token)->firstOrFail();
-    return view('guests.guest_form', compact('trip'));
-}
+    }
 
-public function submit(Request $request, $token)
-{
-    $trip = Trip::where('guest_form_token', $token)->firstOrFail();
+    public function show($token)
+    {
+        $trip = Trip::where('guest_form_token', $token)->firstOrFail();
+        return view('guests.guest_form', compact('trip'));
+    }
 
-    Guest::create([
-        'trip_id' => $trip->id,
-        'name'    => $request->name,
-        'email'   => $request->email,
-        // other guest fields...
-    ]);
+    public function submit(Request $request, $token)
+    {
+        $trip = Trip::where('guest_form_token', $token)->firstOrFail();
 
-    return redirect()->back()->with('success', 'Guest info submitted!');
-}
+        Guest::create([
+            'trip_id' => $trip->id,
+            'name'    => $request->name,
+            'email'   => $request->email,
+            // other guest fields...
+        ]);
+
+        return redirect()->back()->with('success', 'Guest info submitted!');
+    }
 }

@@ -25,7 +25,7 @@
             <div class="card-body">
                 <div class="table-responsive">
                     <div class="row mb-4">
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label>Boat</label>
                             <select id="filterBoat" class="form-control">
                             <option value="">Select boat</option>
@@ -60,7 +60,7 @@
                             </optgroup>
                             </select>
                         </div>
-                        <div class="col-md-2">
+                        <div class="col-md-3">
                             <label>Region</label>
                             <input type="text" id="filterRegion" class="form-control">
                         </div>
@@ -119,11 +119,14 @@
                                 <td class="w-25">{{ $trip->end_date }}</td>
                                 <td>${{ $trip->price }}</td>
 <td>
-    <button onclick="copyText('{{ $trip->id }}')" class="btn btn-sm btn-outline-primary ">
+    <button onclick="copyText('{{ $trip->id }}')" class="btn btn-sm btn-outline-primary">
         Copy Link
     </button>
-    <span id="linkText{{ $trip->id }}" class="d-none">{{ $trip->guest_form_url }}</span>
+    <span id="linkText{{ $trip->id }}" class="d-none">
+        {{ $trip->guest_form_url }}?trip_id={{ $trip->id }}
+    </span>
 </td>
+
 
 
 
@@ -197,8 +200,6 @@
                                                     <label>Notes</label>
                                                     <textarea name="notes" class="form-control">{{ $trip->notes }}</textarea>
                                                 </div>
-                                                <div class="mb-3">
-                                                    <label>Boat</label>
                                                         <div class="mb-3">
                                                             <label>Boat</label>
                                                             <select name="boat" class="form-control" required>
@@ -232,7 +233,6 @@
                                                                     <option value="Room6" {{ $trip->boat == 'Room6' ? 'selected' : '' }}>Room6</option>
                                                                 </optgroup>
                                                             </select>
-                                                        </div>
                                                     </div>
                                                 <div class="mb-3">
                                                     <label>Guests</label>
