@@ -92,6 +92,7 @@
 
     <div class="bs-stepper-content">
 <input type="hidden" name="trip_id" id="tripIdInput">
+<input type="hidden" name="otherGuests" id="otherGuests" value="1">
 
 <!-- Step 1 -->
 <div id="logins-part" class="content" role="tabpanel" aria-labelledby="logins-part-trigger">

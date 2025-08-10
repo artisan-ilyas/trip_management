@@ -16,9 +16,16 @@ class Guest extends Model
         'image_path', 'pdf_path', 'video_path',
     ];
 
-    public function otherGuests()
-    {
-        return $this->hasMany(OtherGuest::class);
-    }
+    // public function otherGuests()
+    // {
+    //     return $this->hasMany(OtherGuest::class);
+    // }
+
+    // Guest.php
+public function otherGuests()
+{
+    return $this->hasMany(OtherGuest::class, 'guest_id');
+}
+
 }
 

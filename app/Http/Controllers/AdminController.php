@@ -8,6 +8,8 @@ use App\Models\Agent;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
 
 class AdminController extends Controller
 {
@@ -15,7 +17,8 @@ class AdminController extends Controller
  public function dashboard()
 {
     $agentsCount = Agent::count();
-    return view('dashboard', compact('agentsCount'));
+    $tripsCount = Trip::count();
+    return view('dashboard', compact('agentsCount','tripsCount'));
 }
 
     public function index()
@@ -72,11 +75,50 @@ class AdminController extends Controller
     }
 
     // Agents
+
     public function index_agent()
     {
-       $agents = Agent::with('trips')->get();
-        return view('admin.agents.index',compact('agents'));
+        $agents = Agent::with('trips')->get();
+        $allTrips = Trip::all();
+
+        return view('admin.agents.index', compact('agents', 'allTrips'));
     }
+
+
+    public function assignTrips(Request $request, $agentId)
+    {
+
+        // dd($request);
+
+        $tripIds = $request->input('trips', []);
+
+        // Remove old assignments for this agent
+        DB::table('agent_trip')->where('agent_id', $agentId)->delete();
+
+        // Insert new assignments
+        $insertData = [];
+        foreach ($tripIds as $tripId) {
+            $insertData[] = [
+                'agent_id' => $agentId,
+                'trip_id'  => $tripId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        if (!empty($insertData)) {
+            DB::table('agent_trip')->insert($insertData);
+        }
+
+        return redirect()->back()->with('success', 'Trips assigned successfully.');
+    }
+
+
+    // public function index_agent()
+    // {
+    //    $agents = Agent::with('trips')->get();
+    //     return view('admin.agents.index',compact('agents'));
+    // }
 
     public function create_agent()
     {
@@ -255,8 +297,7 @@ class AdminController extends Controller
 
     public function store_trip(Request $request)
     {
-        $token = Str::uuid(); // or Str::random(32)
-        $formUrl = route('guest.form', ['token' => $token]); // generate full URL
+       
 
         Trip::create([
             'title'            => $request->title,
@@ -271,18 +312,18 @@ class AdminController extends Controller
             'price'            => $request->price,
             'boat'             => $request->boat,
             'agent_id'         => $request->agent_id,
-            'guest_form_token' => $token,
-            'guest_form_url'   => $formUrl,
+         
         ]);
 
         return redirect()->route('trips.index')->with('success', 'Trip created successfully. Share this link with guests: ' . $formUrl);
     }
 
-public function show($id)
-{
-    $trip = Trip::findOrFail($id);
-    return view('admin.trips.detail', compact('trip'));
-}
+    public function show($id)
+    {
+        $trip = Trip::with(['agent', 'guestList.otherGuests'])->findOrFail($id);
+        return view('admin.trips.detail', compact('trip'));
+    }
+
 
 
     public function update_trip(Request $request, $id)
@@ -368,4 +409,95 @@ public function destroy_finance($id)
     {
         return view('guests.index');
     }
+
+     // Bookings
+    public function booking_index()
+    {
+        $trips = Trip::all();
+        $agents = Agent::all();
+        $tripTypes = Trip::select('trip_type')->distinct()->pluck('trip_type');
+        return view('admin.bookings.index',compact('trips','agents', 'tripTypes'));
+    }
+
+    public function create_booking()
+    {
+         $agents = Agent::all();
+         $trips = Trip::all();
+
+        return view('admin.bookings.create',compact('agents','trips'));
+    }
+
+    
+
+
+    public function store_booking(Request $request)
+    {
+        $token = Str::uuid(); // or Str::random(32)
+        $formUrl = route('guest.form', ['token' => $token]); // generate full URL
+
+        Booking::create([
+            'source'            => $request->source,
+            // 'region'           => $request->region,
+            // 'status'           => $request->status,
+            // 'trip_type'        => $request->trip_type,
+            // 'leading_guest_id' => $request->leading_guest_id,
+            // 'notes'            => $request->notes,
+            // 'start_date'       => $request->start_date,
+            // 'end_date'         => $request->end_date,
+            // 'guests'           => $request->guests,
+            // 'price'            => $request->price,
+            // 'boat'             => $request->boat,
+            // 'agent_id'         => $request->agent_id,
+            'guest_form_token' => $token,
+            'guest_form_url'   => $formUrl,
+        ]);
+
+        return redirect()->route('bookings.index')->with('success', 'Booking created successfully. Share this link with guests: ' . $formUrl);
+    }
+
+    public function show_booking($id)
+    {
+        $trip = Trip::with(['agent', 'guestList.otherGuests'])->findOrFail($id);
+        return view('admin.trips.detail', compact('trip'));
+    }
+
+
+
+    public function update_booking(Request $request, $id)
+    {
+        $trip = Trip::findOrFail($id);
+
+        $trip->update([
+            'title'            => $request->title,
+            'region'           => $request->region,
+            'status'           => $request->status,
+            'trip_type'        => $request->trip_type,
+            'leading_guest_id' => $request->leading_guest_id,
+            'notes'            => $request->notes,
+            'start_date'       => $request->start_date,
+            'end_date'         => $request->end_date,
+            'guests'           => $request->guests,
+            'price'            => $request->price,
+            'boat'             => $request->boat,
+            'agent_id'         => $request->agent_id,
+        ]);
+
+        return redirect()->route('trips.index')->with('success', 'Booking updated successfully.');
+    }
+
+
+    public function destroy_booking($id)
+    {
+        $trip = Trip::findOrFail($id);
+        $trip->delete();
+
+        return redirect()->route('trips.index')->with('success', 'Booking deleted successfully.');
+    }
+
+
+
+
+
+
+
 }

@@ -55,18 +55,23 @@
                                  <td>{{ $agent->email }}</td>
                                 <td>{{ $agent->phone }}</td>
                                 <td>{{ $agent->commission }}</td>
-                                <td>@if($agent->trips->count())
-                                    <ul class="list-styled">
-                                        @foreach($agent->trips as $trip)
-                                            <li>{{ $trip->title }}</li>
-                                        @endforeach
-                                    </ul>
-                                        <!-- {{ $agent->trips->pluck('title')->implode(', ') }} -->
-                                    @else
-                                        <span class="text-muted">No trips</span>
-                                    @endif
-                                </td>
+                                @php
+    $tripCount = DB::table('agent_trip')->where('agent_id', $agent->id)->count();
+@endphp
+<td>
+    @if($tripCount > 0)
+        <span>{{ $tripCount }} trip(s) assigned</span>
+    @else
+        <span class="text-muted">No trips</span>
+    @endif
+</td>
+
                                 <td class="text-center">
+                                    <!-- Assign Trips Button -->
+                                    <button type="button" class="btn btn-sm btn-warning" data-toggle="modal" data-target="#assignTripModal{{ $agent->id }}">
+                                        Assign Trips
+                                    </button>
+
                                     <!-- Trigger Modal -->
                                     <button type="button" class="btn btn-sm btn-primary" data-toggle="modal"
                                                 data-target="#editUserModal{{ $agent->id }}"
@@ -135,6 +140,47 @@
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Assign Trips Modal -->
+                        <div class="modal fade" id="assignTripModal{{ $agent->id }}" tabindex="-1" aria-labelledby="assignTripModalLabel{{ $agent->id }}" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <form action="{{ route('agents.assignTrips', $agent->id) }}" method="POST">
+                                        @csrf
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="assignTripModalLabel{{ $agent->id }}">Assign Trips to {{ $agent->first_name }}</h5>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            @foreach($allTrips as $trip)
+                                                <div class="form-check">
+                                                    <input
+                                                        class="form-check-input"
+                                                        type="checkbox"
+                                                        name="trips[]"
+                                                        value="{{ $trip->id }}"
+                                                        id="trip{{ $trip->id }}_agent{{ $agent->id }}"
+                                                        {{ $agent->trip->contains($trip->id) ? 'checked' : '' }}
+                                                    >
+                                                    <label class="form-check-label" for="trip{{ $trip->id }}_agent{{ $agent->id }}">
+                                                        {{ $trip->title }}
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+
+                                        <div class="modal-footer">
+                                            <button type="submit" class="btn btn-success">Save</button>
+                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
 
                         @endforeach
                         </tbody>

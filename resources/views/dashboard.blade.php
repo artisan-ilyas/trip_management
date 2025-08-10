@@ -10,7 +10,7 @@
             <!-- small box -->
             <div class="small-box bg-info">
               <div class="inner">
-                <h3>150</h3>
+                <h3>12</h3>
 
                 <p>Guests</p>
               </div>
@@ -55,9 +55,9 @@
             <!-- small box -->
             <div class="small-box bg-danger">
               <div class="inner">
-                <h3>65</h3>
+                <h3>{{ $tripsCount }}</h3>
 
-                <p>Unique Visitors</p>
+                <p>Trips</p>
               </div>
               <div class="icon">
                 <i class="ion ion-pie-graph"></i>

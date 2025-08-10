@@ -18,5 +18,11 @@ class Agent extends Model
     {
         return $this->hasMany(Trip::class);
     }
+
+    public function trip()
+    {
+        return $this->belongsToMany(Trip::class);
+    }
+
 }
 

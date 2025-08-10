@@ -83,9 +83,15 @@
     </a>
 </li>
        <li class="nav-item">
-    <a href="/trips" class="nav-link {{ request()->is('trips','create-trip') ? 'active' : '' }}">
+    <a href="/trips" class="nav-link {{ request()->is('trips','create-trip','trips/*') ? 'active' : '' }}">
         <i class="nav-icon fas fa-plane"></i>
         <p>Trips</p>
+    </a>
+</li>
+      <li class="nav-item">
+    <a href="/bookings" class="nav-link {{ request()->is('bookings','create-booking','bookings/*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-clipboard"></i>
+        <p>Bookings</p>
     </a>
 </li>
        <li class="nav-item">

@@ -78,22 +78,25 @@ class GuestController extends Controller
             $guest->update(['video_path' => $videoPath]);
         }
 
-        if ($request->has('otherGuests')) {
-            foreach ($request->otherGuests as $other) {
-                $guest->otherGuests()->create([
-                    'name' => $other['name'] ?? null,
-                    'gender' => $other['gender'] ?? null,
-                    'email' => $other['email'] ?? null,
-                    'password' => $other['password'] ?? null,
-                    'dob' => $other['dob'] ?? null,
-                    'passport' => $other['passport'] ?? null,
-                    'nationality' => $other['nationality'] ?? null,
-                    'cabin' => $other['cabin'] ?? null,
-                    'surfLevel' => $other['surfLevel'] ?? null,
-                    'boardDetails' => $other['boardDetails'] ?? null,
-                ]);
-            }
-        }
+   if ($request->has('guest_name')) {
+    $guestCount = count($request->guest_name);
+
+    for ($i = 0; $i < $guestCount; $i++) {
+        $guest->otherGuests()->create([
+            'name'          => $request->guest_name[$i] ?? null,
+            'gender'        => $request->guest_gender[$i] ?? null,
+            'email'         => $request->guest_email[$i] ?? null,
+            // 'password'    => $request->guest_password[$i] ?? null, // if added later
+            'dob'           => $request->guest_dob[$i] ?? null,
+            'passport'      => $request->guest_passport[$i] ?? null,
+            'nationality'   => $request->guest_nationality[$i] ?? null,
+            'cabin'         => $request->guest_cabin[$i] ?? null,
+            'surfLevel'     => $request->guest_surf[$i] ?? null,
+            'boardDetails'  => $request->guest_board[$i] ?? null,
+        ]);
+    }
+}
+
 
         return redirect()->back()->with('success', 'Guest form submitted successfully.');
     }

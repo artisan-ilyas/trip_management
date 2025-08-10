@@ -68,6 +68,8 @@ Route::middleware('auth')->group(function () {
     Route::post('agents/{id}', [AdminController::class, 'update_agent'])->name('agents.update');
     Route::delete('agents/{id}', [AdminController::class, 'destroy_agent'])->name('agents.destroy');
     Route::get('/agents/filter', [AdminController::class, 'filter_agent'])->name('agents.filter');
+    Route::post('/agents/{agent}/assign-trips', [AdminController::class, 'assignTrips'])->name('agents.assignTrips');
+
 
 
     //Manage Trips
@@ -93,6 +95,15 @@ Route::middleware('auth')->group(function () {
     //Manage Guests
     Route::get('/guests', [AdminController::class, 'guest_index'])->name('guest.index');
     Route::post('/guest-store', [GuestController::class, 'store'])->name('guest.store');
+
+
+     //Manage Trips
+    Route::get('/bookings', [AdminController::class, 'booking_index'])->name('bookings.index');
+    Route::get('/create-booking', [AdminController::class, 'create_booking'])->name('bookings.create');
+    Route::post('/store-booking', [AdminController::class, 'store_booking'])->name('bookings.store');
+    Route::post('booking/{id}', [AdminController::class, 'update_booking'])->name('bookings.update');
+    Route::get('/booking/{id}', [AdminController::class, 'show_booking'])->name('bookings.show');
+    Route::delete('booking/{id}', [AdminController::class, 'destroy_booking'])->name('bookings.destroy');
 });
 
 
