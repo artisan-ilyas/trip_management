@@ -49,274 +49,282 @@
           <div class="card-header bg-primary">
             <h3 class="card-title">Guest information</h3>
           </div>
-<form action="{{ route('guest.store') }}" method="POST" enctype="multipart/form-data">
+<form action="{{ route('guest.store') }}" method="POST" enctype="multipart/form-data" id="guestForm" novalidate>
     @csrf
-<div class="card-body p-0">
-  <div class="bs-stepper">
-    <div class="bs-stepper-header" role="tablist">
-      <div class="step" data-target="#logins-part">
-        <button type="button" class="step-trigger" role="tab" aria-controls="logins-part" id="logins-part-trigger">
-          <span class="bs-stepper-circle bg-success">1</span>
-          <span class="bs-stepper-label">Guest Info</span>
-        </button>
-      </div>
-      <div class="line"></div>
-      <div class="step" data-target="#personal-part">
-        <button type="button" class="step-trigger" role="tab" aria-controls="personal-part" id="personal-part-trigger">
-          <span class="bs-stepper-circle bg-success">2</span>
-          <span class="bs-stepper-label">Travel Details</span>
-        </button>
-      </div>
-      <div class="line"></div>
-      <div class="step" data-target="#confirmation-part">
-        <button type="button" class="step-trigger" role="tab" aria-controls="confirmation-part" id="confirmation-part-trigger">
-          <span class="bs-stepper-circle bg-success">3</span>
-          <span class="bs-stepper-label">Preferences & Health</span>
-        </button>
-      </div>
-      <div class="line"></div>
-      <div class="step" data-target="#guest-part">
-        <button type="button" class="step-trigger" role="tab" aria-controls="guest-part" id="guest-part-trigger">
-          <span class="bs-stepper-circle bg-success">4  </span>
-          <span class="bs-stepper-label">File Uploads & Confirmation</span>
-        </button>
-      </div>
+    <div class="card-body p-0">
+        <div class="bs-stepper">
+            <div class="bs-stepper-header" role="tablist">
+                <div class="step" data-target="#logins-part">
+                    <button type="button" class="step-trigger" role="tab" aria-controls="logins-part" id="logins-part-trigger">
+                        <span class="bs-stepper-circle bg-success">1</span>
+                        <span class="bs-stepper-label">Guest Info</span>
+                    </button>
+                </div>
+                <div class="line"></div>
+                <div class="step" data-target="#personal-part">
+                    <button type="button" class="step-trigger" role="tab" aria-controls="personal-part" id="personal-part-trigger">
+                        <span class="bs-stepper-circle bg-success">2</span>
+                        <span class="bs-stepper-label">Travel Details</span>
+                    </button>
+                </div>
+                <div class="line"></div>
+                <div class="step" data-target="#confirmation-part">
+                    <button type="button" class="step-trigger" role="tab" aria-controls="confirmation-part" id="confirmation-part-trigger">
+                        <span class="bs-stepper-circle bg-success">3</span>
+                        <span class="bs-stepper-label">Preferences & Health</span>
+                    </button>
+                </div>
+                <div class="line"></div>
+                <div class="step" data-target="#guest-part">
+                    <button type="button" class="step-trigger" role="tab" aria-controls="guest-part" id="guest-part-trigger">
+                        <span class="bs-stepper-circle bg-success">4</span>
+                        <span class="bs-stepper-label">File Uploads & Confirmation</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="bs-stepper-content">
+                <input type="hidden" name="trip_id" id="tripIdInput">
+                <input type="hidden" name="otherGuests" id="otherGuests" value="1">
+
+                <!-- Step 1 -->
+                <div id="logins-part" class="content" role="tabpanel" aria-labelledby="logins-part-trigger">
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="name">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="name" id="name" class="form-control @error('name') is-invalid @enderror" value="{{ old('name') }}" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Name must contain only letters and spaces.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="gender">Gender <span class="text-danger">*</span></label>
+                            <select name="gender" id="gender" class="form-control @error('gender') is-invalid @enderror" required>
+                                <option value="">Select gender</option>
+                                <option value="male" {{ old('gender')=='male'?'selected':'' }}>Male</option>
+                                <option value="female" {{ old('gender')=='female'?'selected':'' }}>Female</option>
+                                <option value="other" {{ old('gender')=='other'?'selected':'' }}>Other</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a gender.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="email">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="email" id="email" class="form-control @error('email') is-invalid @enderror" value="{{ old('email') }}" required>
+                            <div class="invalid-feedback">Enter a valid email address.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="dob">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" name="dob" id="dob" class="form-control @error('dob') is-invalid @enderror" value="{{ old('dob') }}" required>
+                            <div class="invalid-feedback">Please select your date of birth.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="passport">Passport Number <span class="text-danger">*</span></label>
+                            <input type="text" name="passport" id="passport" class="form-control @error('passport') is-invalid @enderror" value="{{ old('passport') }}" required pattern="^[A-Za-z0-9]{6,20}$">
+                            <div class="invalid-feedback">Passport must be 6–20 characters (letters/numbers).</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="nationality">Nationality <span class="text-danger">*</span></label>
+                            <input type="text" name="nationality" id="nationality" class="form-control @error('nationality') is-invalid @enderror" value="{{ old('nationality') }}" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Nationality must contain only letters.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="cabin">Cabin Type <span class="text-danger">*</span></label>
+                            <select name="cabin" id="cabin" class="form-control" required>
+                                <option value="">Select cabin type</option>
+                                <option value="standard">Standard</option>
+                                <option value="deluxe">Deluxe</option>
+                                <option value="suite">Suite</option>
+                            </select>
+                            <div class="invalid-feedback">Please select a cabin type.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="surfLevel">Surf Level <span class="text-danger">*</span></label>
+                            <select name="surfLevel" id="surfLevel" class="form-control" required>
+                                <option value="">Select level</option>
+                                <option value="beginner">Beginner</option>
+                                <option value="intermediate">Intermediate</option>
+                                <option value="advanced">Advanced</option>
+                            </select>
+                            <div class="invalid-feedback">Please select your surf level.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="boardDetails">Board Details <span class="text-danger">*</span></label>
+                        <textarea name="boardDetails" id="boardDetails" rows="2" class="form-control" required></textarea>
+                        <div class="invalid-feedback">Please provide board details.</div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="validateStep(this)">Next</button>
+                </div>
+
+                <!-- Step 2: Travel -->
+                <div id="personal-part" class="content" role="tabpanel" aria-labelledby="personal-part-trigger">
+                    <h5>PICK UP / ARRIVAL</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="arrivalFlightDate">Flight Date <span class="text-danger">*</span></label>
+                            <input type="date" name="arrivalFlightDate" id="arrivalFlightDate" class="form-control" required>
+                            <div class="invalid-feedback">Please select arrival flight date.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="arrivalFlightNumber">Flight Number <span class="text-danger">*</span></label>
+                            <input type="text" name="arrivalFlightNumber" id="arrivalFlightNumber" class="form-control" required pattern="^[A-Za-z0-9]+$">
+                            <div class="invalid-feedback">Enter a valid flight number (letters/numbers only).</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="arrivalAirport">Arrival Airport <span class="text-danger">*</span></label>
+                            <input type="text" name="arrivalAirport" id="arrivalAirport" class="form-control" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Enter a valid airport name.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="arrivalTime">Arrival Time <span class="text-danger">*</span></label>
+                            <input type="time" name="arrivalTime" id="arrivalTime" class="form-control" required>
+                            <div class="invalid-feedback">Select arrival time.</div>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label for="hotelPickup">Hotel Pickup <span class="text-danger">*</span></label>
+                            <textarea name="hotelPickup" id="hotelPickup" rows="2" class="form-control" required></textarea>
+                            <div class="invalid-feedback">Enter hotel pickup details.</div>
+                        </div>
+                    </div>
+
+                    <h5 class="mt-4">DROP OFF / DEPARTURE</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="departureFlightDate">Flight Date <span class="text-danger">*</span></label>
+                            <input type="date" name="departureFlightDate" id="departureFlightDate" class="form-control" required>
+                            <div class="invalid-feedback">Select departure flight date.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="departureFlightNumber">Flight Number <span class="text-danger">*</span></label>
+                            <input type="text" name="departureFlightNumber" id="departureFlightNumber" class="form-control" required pattern="^[A-Za-z0-9]+$">
+                            <div class="invalid-feedback">Enter valid flight number.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="departureAirport">Departure Airport <span class="text-danger">*</span></label>
+                            <input type="text" name="departureAirport" id="departureAirport" class="form-control" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Enter valid airport name.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="departureTime">Departure Time <span class="text-danger">*</span></label>
+                            <input type="time" name="departureTime" id="departureTime" class="form-control" required>
+                            <div class="invalid-feedback">Select departure time.</div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="validateStep(this)">Next</button>
+                </div>
+
+                <!-- Step 3: Preferences -->
+                <div id="confirmation-part" class="content" role="tabpanel" aria-labelledby="confirmation-part-trigger">
+                    <h5>Preferences</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="medicalDietary">Medical/Dietary Requirements <span class="text-danger">*</span></label>
+                            <textarea name="medicalDietary" id="medicalDietary" rows="2" class="form-control" required></textarea>
+                            <div class="invalid-feedback">Enter medical/dietary requirements.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="specialRequests">Special Requests <span class="text-danger">*</span></label>
+                            <textarea name="specialRequests" id="specialRequests" rows="2" class="form-control" required></textarea>
+                            <div class="invalid-feedback">Enter special requests.</div>
+                        </div>
+                    </div>
+
+                    <h5>Insurance</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="insuranceName">Insurance Name <span class="text-danger">*</span></label>
+                            <input type="text" name="insuranceName" id="insuranceName" class="form-control" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Enter a valid insurance name.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="policyNumber">Policy Number <span class="text-danger">*</span></label>
+                            <input type="text" name="policyNumber" id="policyNumber" class="form-control" required pattern="^[A-Za-z0-9]+$">
+                            <div class="invalid-feedback">Enter valid policy number.</div>
+                        </div>
+                    </div>
+
+                    <h5>Emergency Contact</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="emergencyName">Name <span class="text-danger">*</span></label>
+                            <input type="text" name="emergencyName" id="emergencyName" class="form-control" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Enter a valid name.</div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="emergencyRelation">Relation <span class="text-danger">*</span></label>
+                            <input type="text" name="emergencyRelation" id="emergencyRelation" class="form-control" required pattern="^[A-Za-z\s]+$">
+                            <div class="invalid-feedback">Enter relation in letters only.</div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="emergencyPhone">Phone <span class="text-danger">*</span></label>
+                            <input type="tel" name="emergencyPhone" id="emergencyPhone" class="form-control" required pattern="^\+?[0-9]{10,15}$">
+                            <div class="invalid-feedback">Enter valid phone number (10–15 digits).</div>
+                        </div>
+                    </div>
+
+                    <h5>Guest Contact</h5>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label for="guestWhatsapp">WhatsApp <span class="text-danger">*</span></label>
+                            <input type="tel" name="guestWhatsapp" id="guestWhatsapp" class="form-control" required pattern="^\+?[0-9]{10,15}$">
+                            <div class="invalid-feedback">Enter valid WhatsApp number.</div>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label for="guestEmail">Email <span class="text-danger">*</span></label>
+                            <input type="email" name="guestEmail" id="guestEmail" class="form-control" required>
+                            <div class="invalid-feedback">Enter valid email.</div>
+                        </div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
+                    <button type="button" class="btn btn-primary" onclick="validateStep(this)">Next</button>
+                </div>
+
+                <!-- Step 4: Upload -->
+                <div id="guest-part" class="content" role="tabpanel" aria-labelledby="guest-part-trigger">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label for="imageUpload">Upload Image <span class="text-danger">*</span></label>
+                            <input type="file" name="imageUpload" id="imageUpload" class="form-control-file" accept="image/*" required>
+                            <div class="invalid-feedback d-block">Please upload an image file.</div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="pdfUpload">Upload PDF <span class="text-danger">*</span></label>
+                            <input type="file" name="pdfUpload" id="pdfUpload" class="form-control-file" accept="application/pdf" required>
+                            <div class="invalid-feedback d-block">Please upload a PDF file.</div>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label for="excelUpload">Upload Excel <span class="text-danger">*</span></label>
+                            <input type="file" name="excelUpload" id="excelUpload" class="form-control-file" accept=".xlsx,.xls" required>
+                            <div class="invalid-feedback d-block">Please upload an Excel file.</div>
+                        </div>
+                    </div>
+
+                    <div class="form-check mt-3">
+                        <input type="checkbox" name="terms" id="terms" class="form-check-input" required>
+                        <label class="form-check-label" for="terms">I agree to the terms and conditions <span class="text-danger">*</span></label>
+                        <div class="invalid-feedback d-block">You must accept the terms.</div>
+                    </div>
+
+                    <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
+                    <button type="submit" class="btn btn-success">Submit</button>
+                </div>
+            </div>
+        </div>
     </div>
-
-    <div class="bs-stepper-content">
-<input type="hidden" name="trip_id" id="tripIdInput">
-<input type="hidden" name="otherGuests" id="otherGuests" value="1">
-
-<!-- Step 1 -->
-<div id="logins-part" class="content" role="tabpanel" aria-labelledby="logins-part-trigger">
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="name">Name</label>
-      <input type="text" name="name" class="form-control" id="name" placeholder="Enter full name">
-    </div>
-    <div class="form-group col-md-6">
-      <label for="gender">Gender</label>
-      <select class="form-control" name="gender" id="gender">
-        <option value="">Select gender</option>
-        <option value="male">Male</option>
-        <option value="female">Female</option>
-        <option value="other">Other</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="form-row">
-
-      <div class="form-group col-md-6">
-      <label for="exampleInputEmail1">Email address</label>
-      <input type="email" class="form-control" name="email" id="exampleInputEmail1" placeholder="Enter email">
-    </div>
-    {{-- <div class="form-group col-md-6">
-      <label for="exampleInputPassword1">Password</label>
-      <input type="password" class="form-control" id="exampleInputPassword1" placeholder="Password">
-    </div> --}}
-  </div>
-
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="dob">Date of Birth</label>
-      <input type="date" class="form-control" name="dob" id="dob">
-    </div>
-    <div class="form-group col-md-6">
-      <label for="passport">Passport Number</label>
-      <input type="text" class="form-control" name="passport" id="passport" placeholder="Enter passport number">
-    </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="nationality">Nationality</label>
-      <input type="text" class="form-control" name="nationality" id="nationality" placeholder="Enter nationality">
-    </div>
-    <div class="form-group col-md-6">
-      <label for="cabin">Cabin Type</label>
-      <select class="form-control" name="cabin" id="cabin">
-        <option value="">Select cabin type</option>
-        <option value="standard">Standard</option>
-        <option value="deluxe">Deluxe</option>
-        <option value="suite">Suite</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="form-row">
-    <div class="form-group col-md-6">
-      <label for="surfLevel">Surf Level</label>
-      <select class="form-control" name="surfLevel" id="surfLevel">
-        <option value="">Select level</option>
-        <option value="beginner">Beginner</option>
-        <option value="intermediate">Intermediate</option>
-        <option value="advanced">Advanced</option>
-      </select>
-    </div>
-    <div class="form-group col-md-6">
-      <label for="boardDetails">Board Details</label>
-      <textarea class="form-control" name="boardDetails" id="boardDetails" rows="2" placeholder="Describe your board preferences"></textarea>
-    </div>
-  </div>
-
-    <button type="button" class="btn btn-primary" onclick="stepper.next()">Next</button>
-</div>
-
-
-
-     <!-- Step 2 -->
-
-
-
-
-      <!-- Step 3 -->
-      <div id="personal-part" class="content" role="tabpanel" aria-labelledby="personal-part-trigger">
-      <!-- Step 3 content (updated) -->
-<div class="form-row">
-  <div class="col-md-12">
-    <h5>PICK UP / ARRIVAL</h5>
-  </div>
-  <div class="form-group col-md-6">
-    <label for="arrivalFlightDate">Flight Date</label>
-    <input type="date" class="form-control" name="arrivalFlightDate" id="arrivalFlightDate">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="arrivalFlightNumber">Flight Number</label>
-    <input type="text" class="form-control" name="arrivalFlightNumber" id="arrivalFlightNumber" placeholder="Enter flight number">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="arrivalAirport">Arrival Airport</label>
-    <input type="text" class="form-control" name="arrivalAirport" id="arrivalAirport" placeholder="Enter arrival airport">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="arrivalTime">Arrival Time</label>
-    <input type="time" class="form-control" name="arrivalTime" id="arrivalTime">
-  </div>
-  <div class="form-group col-md-12">
-    <label for="hotelPickup">Alternatively Hotel Pick up - Hotel Name and Address</label>
-    <textarea class="form-control" name="hotelPickup" id="hotelPickup" rows="2" placeholder="Enter hotel name and address"></textarea>
-  </div>
-
-  <div class="col-md-12 mt-4">
-    <h5>DROP OFF / DEPARTURE</h5>
-  </div>
-  <div class="form-group col-md-6">
-    <label for="departureFlightDate">Flight Date</label>
-    <input type="date" class="form-control" name="departureFlightDate" id="departureFlightDate">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="departureFlightNumber">Flight Number</label>
-    <input type="text" class="form-control" name="departureFlightNumber" id="departureFlightNumber" placeholder="Enter flight number">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="departureAirport">Departure Airport</label>
-    <input type="text" class="form-control" name="departureAirport" id="departureAirport" placeholder="Enter departure airport">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="departureTime">Departure Time</label>
-    <input type="time" class="form-control" name="departureTime" id="departureTime">
-  </div>
-</div>
-
-        <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
-        <button type="button" class="btn btn-primary" onclick="stepper.next()">Next</button>
-      </div>
-
-      <!-- Step 4 -->
-      <div id="confirmation-part" class="content" role="tabpanel" aria-labelledby="confirmation-part-trigger">
-        <!-- Step 4 content -->
-<div class="form-row">
-  <!-- Preferences -->
-  <div class="col-md-12">
-    <h5>Preferences</h5>
-  </div>
-    <div class="form-group col-md-6">
-    <label for="medicalDietary">Medical/Dietary Requirements</label>
-    <textarea class="form-control" name="medicalDietary" id="medicalDietary" rows="2" placeholder="Enter any medical or dietary requirements"></textarea>
-  </div>
-  <div class="form-group col-md-6">
-    <label for="specialRequests">Special Requests</label>
-    <textarea class="form-control" name="specialRequests" id="specialRequests" rows="2" placeholder="Enter any special requests"></textarea>
-  </div>
-
-  <!-- Insurance -->
-  <div class="col-md-12 mt-3">
-    <h5>Insurance</h5>
-  </div>
-  <div class="form-group col-md-6">
-    <label for="insuranceName">Insurance Name</label>
-    <input type="text" class="form-control" name="insuranceName" id="insuranceName" placeholder="Enter insurance company name">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="policyNumber">Policy Number</label>
-    <input type="text" class="form-control" name="policyNumber" id="policyNumber" placeholder="Enter policy number">
-  </div>
-
-  <!-- Emergency Contact -->
-  <div class="col-md-12 mt-3">
-    <h5>Emergency Contact</h5>
-  </div>
-  <div class="form-group col-md-4">
-    <label for="emergencyName">Name</label>
-    <input type="text" class="form-control" name="emergencyName" id="emergencyName" placeholder="Contact name">
-  </div>
-  <div class="form-group col-md-4">
-    <label for="emergencyRelation">Relation</label>
-    <input type="text" class="form-control" name="emergencyRelation" id="emergencyRelation" placeholder="Relation">
-  </div>
-  <div class="form-group col-md-4">
-    <label for="emergencyPhone">Phone</label>
-    <input type="tel" class="form-control" name="emergencyPhone" id="emergencyPhone" placeholder="Phone number">
-  </div>
-
-  <!-- Guest Contact -->
-  <div class="col-md-12 mt-3">
-    <h5>Guest Contact</h5>
-  </div>
-  <div class="form-group col-md-6">
-    <label for="guestWhatsapp">WhatsApp</label>
-    <input type="text" class="form-control" name="guestWhatsapp" id="guestWhatsapp" placeholder="WhatsApp number">
-  </div>
-  <div class="form-group col-md-6">
-    <label for="guestEmail">Email</label>
-    <input type="email" class="form-control" name="guestEmail" id="guestEmail" placeholder="Email address">
-  </div>
-</div>
-
-        <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
-        <button type="button" class="btn btn-primary" onclick="stepper.next()">Next</button>
-      </div>
-
-      <!-- Step 5 -->
-      <div id="guest-part" class="content" role="tabpanel" aria-labelledby="guest-part-trigger">
-   <div class="form-row">
-  <div class="form-group col-md-4">
-    <label for="imageUpload">Upload Image</label>
-    <input type="file" class="form-control-file" name="imageUpload" id="imageUpload" accept="image/*" onchange="previewFile(event, 'image')">
-    <div id="imagePreview" class="mt-2"></div>
-  </div>
-
-  <div class="form-group col-md-4">
-    <label for="pdfUpload">Upload PDF</label>
-    <input type="file" class="form-control-file" name="pdfUpload" id="pdfUpload" accept="application/pdf" onchange="previewFile(event, 'pdf')">
-    <div id="pdfPreview" class="mt-2"></div>
-  </div>
-
-  <div class="form-group col-md-4">
-    <label for="videoUpload">Upload Video</label>
-    <input type="file" class="form-control-file" name="videoUpload" id="videoUpload" accept="video/*" onchange="previewFile(event, 'video')">
-    <div id="videoPreview" class="mt-2"></div>
-  </div>
-</div>
-        <button type="button" class="btn btn-primary" onclick="stepper.previous()">Previous</button>
-        <button type="submit" class="btn btn-success">Submit</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 </form>
+
 
 
           <!-- <div class="card-footer">
@@ -417,6 +425,35 @@ function addGuestForm() {
     previewContainer.appendChild(preview);
     previewContainer.appendChild(deleteBtn);
   }
+ 
+function validateStep(button) {
+    let stepContent = button.closest('.content');
+    let inputs = stepContent.querySelectorAll('input, select, textarea');
+    let valid = true;
+
+    inputs.forEach(input => {
+        if (!input.checkValidity()) {
+            input.classList.add('is-invalid');
+            valid = false;
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+
+    if (valid) stepper.next();
+}
+
+document.querySelectorAll('#guestForm input, #guestForm select, #guestForm textarea').forEach(input => {
+    input.addEventListener('input', () => {
+        if (!input.checkValidity()) {
+            input.classList.add('is-invalid');
+        } else {
+            input.classList.remove('is-invalid');
+        }
+    });
+});
+
+
 </script>
 </body>
 </html>
