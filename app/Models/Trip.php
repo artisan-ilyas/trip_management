@@ -21,6 +21,7 @@ class Trip extends Model
         'agent_id',
         'guest_form_token',
         'guest_form_url',
+        'company_id'
     ];
 
     public function agent()

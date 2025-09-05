@@ -8,7 +8,7 @@ class OtherGuest extends Model
 {
     protected $fillable = [
         'guest_id', 'name', 'gender', 'email', 'password', 'dob', 'passport',
-        'nationality', 'cabin', 'surfLevel', 'boardDetails'
+        'nationality', 'cabin', 'surfLevel', 'boardDetails','company_id'
     ];
 
     public function guest()

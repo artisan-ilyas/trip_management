@@ -89,7 +89,7 @@
     <div class="d-flex justify-content-center">
           <!-- View Button -->
            @can('view-trips')
-        <a href="{{ route('bookings.show', $booking->id) }}" class="btn btn-sm btn-success mx-2">
+        <a href="{{ route('bookings.show', $booking->id) }}" class="btn btn-sm btn-success">
             View
         </a>
         @endcan

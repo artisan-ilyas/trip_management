@@ -113,6 +113,15 @@
   </li>
 @endcan
 
+@can('company')
+  <li class="nav-item">
+    <a href="/companies" class="nav-link {{ request()->is('companies','create-company','company/*') ? 'active' : '' }}">
+        <i class="nav-icon fas fa-building"></i>
+        <p>Companies</p>
+    </a>
+  </li>
+@endcan
+
 @can('guests')
    <li class="nav-item">
     <a href="/guests" class="nav-link {{ request()->is('guests','guest/*') ? 'active' : '' }}">

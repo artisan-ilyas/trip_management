@@ -7,6 +7,7 @@ use Spatie\Permission\Models\Role;
 use App\Models\User;
 use App\Models\Guest;
 use App\Models\Agent;
+use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
@@ -27,13 +28,15 @@ class AdminController extends Controller
     {
          $users = User::all();
           $roles = Role::all();
-        return view('admin.users.manage_users', compact('users','roles'));
+           $companies = Company::all();
+        return view('admin.users.manage_users', compact('users','roles','companies'));
     }
 
     public function create()
     {
          $roles = Role::all();
-        return view('admin.users.create',compact('roles'));
+         $companies = Company::all();
+        return view('admin.users.create',compact('roles','companies'));
     }
     public function store(Request $request)
     {
@@ -42,30 +45,35 @@ class AdminController extends Controller
             'last_name'  => $request->last_name,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
+            'company_id'      => $request->company_id,
         ]);
 
         $role = Role::findOrFail($request->role);
         $user->assignRole($role->name);
+        
 
         return redirect()->route('users.create')->with('success', 'User created successfully.');
     }
 
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
+public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
 
-        $user->update([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'password'   => $request->filled('password') ? Hash::make($request->password) : $user->password,
-        ]);
+    $user->update([
+        'first_name' => $request->first_name,
+        'last_name'  => $request->last_name,
+        'email'      => $request->email,
+        'company_id' => $request->company_id, // ✅ save company_id
+        'password'   => $request->filled('password') 
+                            ? Hash::make($request->password) 
+                            : $user->password,
+    ]);
 
-        $role = Role::findOrFail($request->role);
-        $user->syncRoles([$role->name]);
+    $role = Role::findOrFail($request->role);
+    $user->syncRoles([$role->name]);
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
-    }
+    return redirect()->route('users.index')->with('success', 'User updated successfully.');
+}
 
 
     public function destroy($id)
@@ -595,10 +603,72 @@ public function booking_index(Request $request)
         return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
     }
 
+    //Companies
+    public function create_company()
+    {
+        
+        return view('admin.companies.create');
+    }
+
+public function store_company(Request $request)
+{
+    $company = Company::create([
+        'name'          => $request->name,
+        'legal_name'    => $request->legal_name,
+        'slug'          => $request->slug,
+        'currency'      => $request->currency,
+        'timezone'      => $request->timezone,
+        'billing_email' => $request->billing_email,
+        'address'       => $request->address,
+        'vat_tax_id'    => $request->vat_tax_id,
+    ]);
+
+    return redirect()
+        ->route('company.index')
+        ->with('success', 'Company created successfully.');
+}
 
 
 
+      public function company_index()
+    {
+        $companies = Company::all();
+        return view('admin.companies.index', compact('companies'));
+    }
 
+     public function show_company($id)
+    {
+        
+        $company = Company::findOrFail($id);
+        return view('admin.companies.detail', compact('company'));
+    }
 
+    public function update_company(Request $request, $id)
+{
+    $company = Company::findOrFail($id);
+
+    $company->update([
+        'name'        => $request->name,
+        'legal_name'  => $request->legal_name,
+        'slug'        => $request->slug,
+        'currency'    => $request->currency,
+        'timezone'    => $request->timezone,
+        'billing_email' => $request->billing_email,
+        'address'     => $request->address,
+        'vat_tax_id'  => $request->vat_tax_id,
+    ]);
+
+    return redirect()
+        ->route('company.index')
+        ->with('success', 'Company updated successfully.');
+}
+
+        public function destroy_company($id)
+    {
+        $company = Company::findOrFail($id);
+        $company->delete();
+
+        return redirect()->route('company.index')->with('success', 'Company deleted successfully.');
+    }
 
 }

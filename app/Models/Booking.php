@@ -23,6 +23,7 @@ class Booking extends Model
         'comments',
         'notes',
         'token',
+        'company_id'
     ];
 
 

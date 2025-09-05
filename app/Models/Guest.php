@@ -13,7 +13,7 @@ class Guest extends Model
         'medicalDietary', 'specialRequests', 'insuranceName', 'policyNumber',
         'emergencyName', 'emergencyRelation', 'emergencyPhone',
         'guestWhatsapp', 'guestEmail',
-        'image_path', 'pdf_path', 'video_path',
+        'image_path', 'pdf_path', 'video_path','company_id'
     ];
 
     // public function otherGuests()

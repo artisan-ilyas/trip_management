@@ -48,15 +48,28 @@
                     </div>
                 </div>
 
-                <div class="mb-3">
-                    <label for="role" class="form-label">Role</label>
-                    <select name="role" id="role" class="form-control" required>
-                        <option value="" disabled selected>Select role</option>
-                        @foreach($roles as $role)
-                            <option value="{{ $role->id }}">{{ $role->name }}</option>
-                        @endforeach
-                    </select>
-                </div>
+               <div class="row mb-3">
+    <div class="col-md-6">
+        <label for="role" class="form-label">Role</label>
+        <select name="role" id="role" class="form-control" required>
+            <option value="" disabled selected>Select role</option>
+            @foreach($roles as $role)
+                <option value="{{ $role->id }}">{{ $role->name }}</option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-6">
+        <label for="status" class="form-label">Company</label>
+      <select name="company_id" id="company_id" class="form-control" required>
+            <option value="" disabled selected>Select Company</option>
+            @foreach($companies as $company)
+                <option value="{{ $company->id }}">{{ $company->name }}</option>
+            @endforeach
+        </select>
+    </div>
+</div>
+
 
                 <button type="submit" class="btn btn-primary">Create User</button>
             </form>

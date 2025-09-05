@@ -110,6 +110,18 @@
                             @endforeach
                         </select>
                     </div>
+                    <div class="mb-3">
+                        <label>Company</label>
+                        <select name="company_id" class="form-control" required>
+                            <option value="" disabled>Select Company</option>
+                            @foreach($companies as $company)
+                                <option value="{{ $company->id }}" 
+                                    {{ $user->company_id == $company->id ? 'selected' : '' }}>
+                                    {{ $company->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
 
                 <div class="modal-footer">
