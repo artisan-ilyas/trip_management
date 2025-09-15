@@ -18,6 +18,11 @@ Route::get('/test-pdf', function () {
     return $pdf->download('test.pdf');
 });
 
+Route::get('/calendar-test', function () {
+    return view('calendar_test');
+});
+
+
 Route::get('/download-pdf', function () {
     $users = User::get();
 
@@ -108,6 +113,7 @@ Route::middleware(['role:admin|sales'])->group(function () {
     Route::get('/trips/{id}', [AdminController::class, 'show'])->name('trips.show');
     Route::delete('trips/{id}', [AdminController::class, 'destroy_trip'])->name('trips.destroy');
     Route::get('/admin/trips/filter', [AdminController::class, 'filter'])->name('trips.filter');
+    Route::get('/admin/trips/events', [AdminController::class, 'events'])->name('trips.events');
     Route::get('/trips/{trip}/rooms', [AdminController::class, 'getRooms'])->name('trips.rooms');
 });
 

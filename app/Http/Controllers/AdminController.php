@@ -250,51 +250,135 @@ public function update(Request $request, $id)
         return view('admin.trips.create',compact('agents'));
     }
 
-    public function filter(Request $request)
-    {
-        $query = Trip::query();
+public function filter(Request $request)
+{
+    $query = Trip::query()->with('bookings');
 
-        if ($request->boat) $query->where('boat', $request->boat);
-        if ($request->region) $query->where('region', $request->region);
-        if ($request->status) $query->where('status', $request->status);
-        if ($request->start_date) $query->whereDate('start_date', '>=', $request->start_date);
-        if ($request->end_date) $query->whereDate('end_date', '<=', $request->end_date);
+    if ($request->boat) $query->where('boat', $request->boat);
+    if ($request->status) $query->where('status', $request->status);
+    if ($request->start_date) $query->whereDate('start_date', '>=', $request->start_date);
+    if ($request->end_date) $query->whereDate('end_date', '<=', $request->end_date);
 
-        $trips = $query->with('agent')->get();
-        $tripTypes = Trip::select('trip_type')->distinct()->pluck('trip_type');
-        $agents = Agent::all();
+    $trips = $query->get();
 
-        // Render full HTML (inline Blade string)
-        $html = '';
-        foreach ($trips as $index => $trip) {
-            $html .= '
-            <tr>
-                <td>' . ($index + 1) . '</td>
-                <td>' . $trip->title . '</td>
-                <td>' . $trip->region . '</td>
-                <td>' . $trip->status . '</td>
-                <td>' . $trip->start_date . '</td>
-                <td>' . $trip->end_date . '</td>
-                <td>$' . $trip->price . '</td>
-               
-                <td class="text-center">
-                    <div class="d-flex justify-content-center">
-                        <button type="button" class="btn btn-sm btn-primary mx-2" data-toggle="modal" data-target="#editTripModal' . $trip->id . '">
-                            Edit
-                        </button>
-                        <form action="' . route('trips.destroy', $trip->id) . '" method="POST">
-                            ' . csrf_field() . method_field('DELETE') . '
-                            <button onclick="return confirm(\'Are you sure?\')" class="btn btn-sm btn-danger">Delete</button>
-                        </form>
-                    </div>
-                </td>
-            </tr>
-            ';
-            // Optional: Add modals here as string if needed
+    // Build resources = boats
+    $boats = $trips->pluck('boat')->unique()->map(fn($boat) => [
+        'id' => $boat,
+        'title' => $boat
+    ])->values();
+
+    // Build events = availabilities
+    $events = [];
+    foreach ($trips as $trip) {
+        $events[] = [
+            'id' => 'trip-' . $trip->id,
+            'resourceId' => $trip->boat,
+            'title' => $trip->title,
+            'start' => $trip->start_date,
+            'end'   => $trip->end_date,
+            'color' => match($trip->status) {
+                'draft' => '#6c757d',
+                'published' => '#007bff',
+                'active' => '#28a745',
+                'completed' => '#20c997',
+                'cancelled' => '#dc3545',
+                default => '#17a2b8',
+            },
+            'extendedProps' => [
+                'trip_id' => $trip->id,
+                'status' => $trip->status,
+                'occupancy' => $trip->occupancy_percent ?? 0,
+            ]
+        ];
+
+        // Nested bookings → as chips
+        foreach ($trip->bookings as $booking) {
+            $events[] = [
+                'id' => 'booking-' . $booking->id,
+                'resourceId' => $trip->boat,
+                'title' => 'Booking #' . $booking->id,
+                'start' => $booking->start_date,
+                'end'   => $booking->end_date,
+                'display' => 'list-item', // renders as small chip
+                'color' => match($booking->status) {
+                    'pre_booking' => '#ffc107',
+                    'confirmed' => '#28a745',
+                    'active' => '#17a2b8',
+                    'completed' => '#20c997',
+                    'cancelled' => '#dc3545',
+                    default => '#6c757d',
+                },
+                'extendedProps' => [
+                    'status' => $booking->status,
+                    'lead_guest' => $booking->lead_guest,
+                    'rooms' => $booking->rooms,
+                    'pax' => $booking->pax,
+                    'dp_status' => $booking->dp_status,
+                ]
+            ];
         }
-
-        return response()->json(['html' => $html]);
     }
+
+    return response()->json([
+        'resources' => $boats,
+        'events' => $events
+    ]);
+}
+
+
+public function events(Request $request)
+{
+    $query = Trip::query();
+
+    // Apply filters if passed
+    if ($request->filled('boat')) {
+        $query->where('boat', $request->boat);
+    }
+    if ($request->filled('status')) {
+        $query->where('status', $request->status);
+    }
+    if ($request->filled('start_date')) {
+        $query->whereDate('start_date', '>=', $request->start_date);
+    }
+    if ($request->filled('end_date')) {
+        $query->whereDate('end_date', '<=', $request->end_date);
+    }
+
+    $trips = $query->get();
+
+    $events = [];
+
+    foreach ($trips as $trip) {
+        $resourceId = match($trip->boat) {
+            'Samara 1 (5 rooms)' => 'boat-1',
+            'Samara 1 (4 rooms)' => 'boat-2',
+            'Mischief (5 rooms)' => 'boat-3',
+            'Samara (6 rooms)' => 'boat-4',
+            default => null,
+        };
+
+        if (!$resourceId) continue;
+
+        $events[] = [
+            't_id' => $trip->id,
+            'id' => 'trip-' . $trip->id,
+            'resourceId' => $resourceId,
+            'title' => $trip->title,
+            'start' => $trip->start_date,
+            'end' => $trip->end_date,
+            'status' => $trip->status,
+            'region' => $trip->region,
+            'trip_type' => $trip->trip_type,
+            'guests' => $trip->guests,
+            'price' => $trip->price,
+            'notes' => $trip->notes,
+        ];
+    }
+
+    // dd($events);
+
+    return response()->json($events);
+}
 
 
 
