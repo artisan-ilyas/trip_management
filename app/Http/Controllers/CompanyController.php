@@ -10,7 +10,7 @@ use App\Models\Company;
 
 class CompanyController extends Controller
 {
-     //Companies
+    // Companies
     public function create_company()
     {
         return view('admin.companies.create');

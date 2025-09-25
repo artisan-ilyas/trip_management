@@ -16,6 +16,19 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\TripController;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+
+
+Route::domain('{slug}.domain.test')->group(function () {
+    Route::get('/', function ($slug) {
+        $company = \App\Models\Company::where('slug', $slug)->firstOrFail();
+        return "Tenant: " . $company->name;
+    });
+});
+
+
+
+
+
 // Test PDF
 Route::get('/test-pdf', function () {
     $pdf = Pdf::loadHTML('<h1>Hello World</h1><p>This is working!</p>');

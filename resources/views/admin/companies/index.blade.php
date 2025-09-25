@@ -52,28 +52,35 @@
                                 <td>{{ $company->vat_tax_id }}</td>
 
                                 <td class="text-center">
-                                     <a href="{{ route('company.show', $company->id) }}" class="btn btn-sm btn-success">
-            View
-        </a>
-                                    <button class="btn btn-sm btn-primary edit-btn"
-                                        data-id="{{ $company->id }}"
-                                        data-name="{{ $company->name }}"
-                                        data-legal_name="{{ $company->legal_name }}"
-                                        data-slug="{{ $company->slug }}"
-                                        data-currency="{{ $company->currency }}"
-                                        data-timezone="{{ $company->timezone }}"
-                                        data-billing_email="{{ $company->billing_email }}"
-                                        data-address="{{ $company->address }}"
-                                        data-vat_tax_id="{{ $company->vat_tax_id }}">
-                                        Edit
-                                    </button>
+    <a href="{{ route('company.show', $company->id) }}" class="btn btn-sm btn-success">
+        View
+    </a>
+<a href="http://{{ $company->slug }}.domain.test"
+   class="btn btn-sm btn-warning" target="_blank">
+   Tenant Link
+</a>
 
-                                    <form action="{{ route('company.destroy', $company->id) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this company?')">Delete</button>
-                                    </form>
-                                </td>
+
+    <button class="btn btn-sm btn-primary edit-btn"
+        data-id="{{ $company->id }}"
+        data-name="{{ $company->name }}"
+        data-legal_name="{{ $company->legal_name }}"
+        data-slug="{{ $company->slug }}"
+        data-currency="{{ $company->currency }}"
+        data-timezone="{{ $company->timezone }}"
+        data-billing_email="{{ $company->billing_email }}"
+        data-address="{{ $company->address }}"
+        data-vat_tax_id="{{ $company->vat_tax_id }}">
+        Edit
+    </button>
+
+    <form action="{{ route('company.destroy', $company->id) }}" method="POST" class="d-inline">
+        @csrf
+        @method('DELETE')
+        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this company?')">Delete</button>
+    </form>
+</td>
+
                             </tr>
                             @empty
                             <tr>

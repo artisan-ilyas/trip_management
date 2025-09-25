@@ -9,21 +9,22 @@ class TenantResolver
 {
     public function handle($request, Closure $next)
     {
-        // get subdomain (abc from abc.localhost)
-        $host = $request->getHost();
-        $subdomain = explode('.', $host)[0];
+        // Resolve tenant from slug (public) or auth (admin)
+        $company = null;
 
-        // find company by domain/subdomain
-        $company = Company::where('domain', $subdomain.'.localhost')->first();
-
-        if (! $company) {
-            abort(404, 'Company not found');
+        if ($request->has('company')) {
+            $company = Company::where('slug', $request->get('company'))->first();
+        } elseif (auth()->check()) {
+            $company = auth()->user()->company ?? null;
         }
 
-        // share company info globally
-        app()->instance('company', $company);
+        if ($company) {
+            app()->instance('tenant', $company);
+
+            // Force tenant connection (for now same DB, later per-tenant)
+            config(['database.default' => 'tenant']);
+        }
 
         return $next($request);
     }
 }
-

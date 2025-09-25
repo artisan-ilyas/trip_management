@@ -33,7 +33,6 @@ return [
 
      'default' => env('DB_CONNECTION', 'central'),
 
-    'connections' => [
 
         'central' => [
             'driver' => 'mysql',
@@ -74,7 +73,6 @@ return [
                 PDO::MYSQL_ATTR_SSL_CA => env('MYSQL_ATTR_SSL_CA'),
             ]) : [],
         ],
-    ],
 
 
 
