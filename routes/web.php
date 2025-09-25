@@ -1,6 +1,10 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AgentController;
+use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\GuestController;
 use App\Http\Controllers\ProfileController;
@@ -9,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\RolePermissionController;
-
+use App\Http\Controllers\TripController;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 // Test PDF
@@ -93,67 +97,67 @@ Route::middleware('auth')->group(function () {
     |--------------------------------------------------------------------------
     | Both admin and super-admin can access these
     */
-   // ================== Agents ==================
-Route::middleware(['role:admin|sales'])->group(function () {
-    Route::get('/agents', [AdminController::class, 'index_agent'])->name('agents.index');
-    Route::get('/create-agent', [AdminController::class, 'create_agent'])->name('agents.create');
-    Route::post('/store-agent', [AdminController::class, 'store_agent'])->name('agent.store');
-    Route::post('agents/{id}', [AdminController::class, 'update_agent'])->name('agents.update');
-    Route::delete('agents/{id}', [AdminController::class, 'destroy_agent'])->name('agents.destroy');
-    Route::get('/agents/filter', [AdminController::class, 'filter_agent'])->name('agents.filter');
-    Route::post('/agents/{agent}/assign-trips', [AdminController::class, 'assignTrips'])->name('agents.assignTrips');
-});
+    // ================== Agents ==================
+    Route::middleware(['role:admin|sales'])->group(function () {
+        Route::get('/agents', [AgentController::class, 'index_agent'])->name('agents.index');
+        Route::get('/create-agent', [AgentController::class, 'create_agent'])->name('agents.create');
+        Route::post('/store-agent', [AgentController::class, 'store_agent'])->name('agent.store');
+        Route::post('agents/{id}', [AgentController::class, 'update_agent'])->name('agents.update');
+        Route::delete('agents/{id}', [AgentController::class, 'destroy_agent'])->name('agents.destroy');
+        Route::get('/agents/filter', [AgentController::class, 'filter_agent'])->name('agents.filter');
+        Route::post('/agents/{agent}/assign-trips', [AgentController::class, 'assignTrips'])->name('agents.assignTrips');
+    });
 
-// ================== Trips ==================
-Route::middleware(['role:admin|sales'])->group(function () {
-    Route::get('/trips', [AdminController::class, 'trip_index'])->name('trips.index');
-    Route::get('/create-trip', [AdminController::class, 'create_trip'])->name('trips.create');
-    Route::post('/store-trip', [AdminController::class, 'store_trip'])->name('trips.store');
-    Route::post('trips/{id}', [AdminController::class, 'update_trip'])->name('trips.update');
-    Route::get('/trips/{id}', [AdminController::class, 'show'])->name('trips.show');
-    Route::delete('trips/{id}', [AdminController::class, 'destroy_trip'])->name('trips.destroy');
-    Route::get('/admin/trips/filter', [AdminController::class, 'filter'])->name('trips.filter');
-    Route::get('/admin/trips/events', [AdminController::class, 'events'])->name('trips.events');
-    Route::get('/trips/{trip}/rooms', [AdminController::class, 'getRooms'])->name('trips.rooms');
-});
+    // ================== Trips ==================
+    Route::middleware(['role:admin|sales'])->group(function () {
+        Route::get('/trips', [TripController::class, 'trip_index'])->name('trips.index');
+        Route::get('/create-trip', [TripController::class, 'create_trip'])->name('trips.create');
+        Route::post('/store-trip', [TripController::class, 'store_trip'])->name('trips.store');
+        Route::post('trips/{id}', [TripController::class, 'update_trip'])->name('trips.update');
+        Route::get('/trips/{id}', [TripController::class, 'show'])->name('trips.show');
+        Route::delete('trips/{id}', [TripController::class, 'destroy_trip'])->name('trips.destroy');
+        Route::get('/admin/trips/filter', [TripController::class, 'filter'])->name('trips.filter');
+        Route::get('/admin/trips/events', [TripController::class, 'events'])->name('trips.events');
+        Route::get('/trips/{trip}/rooms', [TripController::class, 'getRooms'])->name('trips.rooms');
+    });
 
-// ================== Finances ==================
-Route::middleware(['role:admin'])->group(function () {
-    Route::get('/finances', [AdminController::class, 'finance_index'])->name('finances.index');
-    Route::get('/create-finance', [AdminController::class, 'create_finance'])->name('finances.create');
-    Route::post('/store-finance', [AdminController::class, 'store_finance'])->name('finances.store');
-    Route::post('finances/{id}', [AdminController::class, 'update_finance'])->name('finances.update');
-    Route::delete('finances/{id}', [AdminController::class, 'destroy_finance'])->name('finances.destroy');
-});
+    // ================== Finances ==================
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/finances', [FinanceController::class, 'finance_index'])->name('finances.index');
+        Route::get('/create-finance', [FinanceController::class, 'create_finance'])->name('finances.create');
+        Route::post('/store-finance', [FinanceController::class, 'store_finance'])->name('finances.store');
+        Route::post('finances/{id}', [FinanceController::class, 'update_finance'])->name('finances.update');
+        Route::delete('finances/{id}', [FinanceController::class, 'destroy_finance'])->name('finances.destroy');
+    });
 
-// ================== Guests ==================
-Route::middleware(['role:admin|sales'])->group(function () {
-    Route::get('/guests', [AdminController::class, 'guest_index'])->name('guest.index');
-    Route::post('/guest-store', [GuestController::class, 'store'])->name('guest.store');
-    Route::get('/guest/{id}', [GuestController::class, 'show_guest'])->name('guest.show');
-    Route::get('/guest/{id}/pdf', [GuestController::class, 'download_pdf'])->name('guest.download.pdf');
-});
+    // ================== Guests ==================
+    Route::middleware(['role:admin|sales'])->group(function () {
+        Route::get('/guests', [GuestController::class, 'guest_index'])->name('guest.index');
+        Route::post('/guest-store', [GuestController::class, 'store'])->name('guest.store');
+        Route::get('/guest/{id}', [GuestController::class, 'show_guest'])->name('guest.show');
+        Route::get('/guest/{id}/pdf', [GuestController::class, 'download_pdf'])->name('guest.download.pdf');
+    });
 
-// ================== Bookings ==================
-Route::middleware(['role:admin|sales'])->group(function () {
-    Route::get('/bookings', [AdminController::class, 'booking_index'])->name('bookings.index');
-    Route::get('/create-booking', [AdminController::class, 'create_booking'])->name('bookings.create');
-    Route::post('/store-booking', [AdminController::class, 'store_booking'])->name('bookings.store');
-    Route::put('booking/{id}', [AdminController::class, 'update_booking'])->name('bookings.update');
-    Route::get('/booking/{id}', [AdminController::class, 'show_booking'])->name('bookings.show');
-    Route::get('/booking/edit/{id}', [AdminController::class, 'edit_booking'])->name('bookings.edit');
-    Route::delete('booking/{id}', [AdminController::class, 'destroy_booking'])->name('bookings.destroy');
-});
+    // ================== Bookings ==================
+    Route::middleware(['role:admin|sales'])->group(function () {
+        Route::get('/bookings', [BookingController::class, 'booking_index'])->name('bookings.index');
+        Route::get('/create-booking', [BookingController::class, 'create_booking'])->name('bookings.create');
+        Route::post('/store-booking', [BookingController::class, 'store_booking'])->name('bookings.store');
+        Route::put('booking/{id}', [BookingController::class, 'update_booking'])->name('bookings.update');
+        Route::get('/booking/{id}', [BookingController::class, 'show_booking'])->name('bookings.show');
+        Route::get('/booking/edit/{id}', [BookingController::class, 'edit_booking'])->name('bookings.edit');
+        Route::delete('booking/{id}', [BookingController::class, 'destroy_booking'])->name('bookings.destroy');
+    });
 
-// ================== Companies ==================
-Route::middleware(['role:admin|super-admin'])->group(function () {
-    Route::get('/companies', [AdminController::class, 'company_index'])->name('company.index');
-    Route::get('/create-company', [AdminController::class, 'create_company'])->name('company.create');
-    Route::post('/store-company', [AdminController::class, 'store_company'])->name('company.store');
-    Route::put('company/{id}', [AdminController::class, 'update_company'])->name('company.update');
-    Route::get('/company/{id}', [AdminController::class, 'show_company'])->name('company.show');
-    Route::delete('company/{id}', [AdminController::class, 'destroy_company'])->name('company.destroy');
-});
+    // ================== Companies ==================
+    Route::middleware(['role:admin|super-admin'])->group(function () {
+        Route::get('/companies', [CompanyController::class, 'company_index'])->name('company.index');
+        Route::get('/create-company', [CompanyController::class, 'create_company'])->name('company.create');
+        Route::post('/store-company', [CompanyController::class, 'store_company'])->name('company.store');
+        Route::put('company/{id}', [CompanyController::class, 'update_company'])->name('company.update');
+        Route::get('/company/{id}', [CompanyController::class, 'show_company'])->name('company.show');
+        Route::delete('company/{id}', [CompanyController::class, 'destroy_company'])->name('company.destroy');
+    });
 
 });
 

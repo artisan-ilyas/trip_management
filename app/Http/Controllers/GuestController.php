@@ -10,10 +10,15 @@ use Barryvdh\Snappy\Facades\SnappyPdf as PDF;
 class GuestController extends Controller
 {
 
-   public function store(Request $request)
+    public function guest_index()
     {
-      
+        $guests = Guest::all();
 
+        return view('guests.index', compact('guests'));
+    }
+
+    public function store(Request $request)
+    {
         $guest = Guest::create([
             'trip_id' => $request->trip_id,
             'name' => $request->name,
@@ -62,24 +67,24 @@ class GuestController extends Controller
             $guest->update(['video_path' => $videoPath]);
         }
 
-   if ($request->has('guest_name')) {
-    $guestCount = count($request->guest_name);
+        if ($request->has('guest_name')) {
+            $guestCount = count($request->guest_name);
 
-    for ($i = 0; $i < $guestCount; $i++) {
-        $guest->otherGuests()->create([
-            'name'          => $request->guest_name[$i] ?? null,
-            'gender'        => $request->guest_gender[$i] ?? null,
-            'email'         => $request->guest_email[$i] ?? null,
-            // 'password'    => $request->guest_password[$i] ?? null, // if added later
-            'dob'           => $request->guest_dob[$i] ?? null,
-            'passport'      => $request->guest_passport[$i] ?? null,
-            'nationality'   => $request->guest_nationality[$i] ?? null,
-            'cabin'         => $request->guest_cabin[$i] ?? null,
-            'surfLevel'     => $request->guest_surf[$i] ?? null,
-            'boardDetails'  => $request->guest_board[$i] ?? null,
-        ]);
-    }
-}
+            for ($i = 0; $i < $guestCount; $i++) {
+                $guest->otherGuests()->create([
+                    'name'          => $request->guest_name[$i] ?? null,
+                    'gender'        => $request->guest_gender[$i] ?? null,
+                    'email'         => $request->guest_email[$i] ?? null,
+                    // 'password'    => $request->guest_password[$i] ?? null, // if added later
+                    'dob'           => $request->guest_dob[$i] ?? null,
+                    'passport'      => $request->guest_passport[$i] ?? null,
+                    'nationality'   => $request->guest_nationality[$i] ?? null,
+                    'cabin'         => $request->guest_cabin[$i] ?? null,
+                    'surfLevel'     => $request->guest_surf[$i] ?? null,
+                    'boardDetails'  => $request->guest_board[$i] ?? null,
+                ]);
+            }
+        }
 
 
         return redirect()->back()->with('success', 'Guest form submitted successfully.');
@@ -111,25 +116,23 @@ class GuestController extends Controller
         return redirect()->back()->with('success', 'Guest info submitted!');
     }
 
-public function show_guest($id)
-{
-    // Load guest with its trip and booking
-    $guest = Guest::with(['trip', 'booking'])->findOrFail($id);
+    public function show_guest($id)
+    {
+        // Load guest with its trip and booking
+        $guest = Guest::with(['trip', 'booking'])->findOrFail($id);
 
-    return view('guests.detail', compact('guest'));
-}
+        return view('guests.detail', compact('guest'));
+    }
 
-// PDF
+    // PDF
+    public function download_pdf($id)
+    {
+        $guest = Guest::with('trip')->findOrFail($id);
 
+        $pdf = Pdf::loadView('guests.pdf.view', compact('guest'));
 
-public function download_pdf($id)
-{
-    $guest = Guest::with('trip')->findOrFail($id);
-
-    $pdf = Pdf::loadView('guests.pdf.view', compact('guest'));
-
-    return $pdf->download('guest-'.$guest->id.'.pdf');
-}
+        return $pdf->download('guest-'.$guest->id.'.pdf');
+    }
 
 
 }
