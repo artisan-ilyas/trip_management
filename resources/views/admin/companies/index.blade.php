@@ -55,7 +55,7 @@
     <a href="{{ route('company.show', $company->id) }}" class="btn btn-sm btn-success">
         View
     </a>
-    <a href="{{ (app()->environment('production') ? 'https://' : 'http://') . $company->slug . '.' . config('app.domain_name') }}"
+    <a href="{{ $company->slug }} . '.' . 'trip_management.test' }}"
     class="btn btn-sm btn-warning" target="_blank">
     Tenant Link
     </a>
