@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\Models\Trip;
 use App\Models\Booking;
 use Spatie\Permission\Models\Role;
@@ -9,48 +10,74 @@ use App\Models\Guest;
 use App\Models\Agent;
 use App\Models\Company;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-
 
 class AdminController extends Controller
 {
+    protected $tenant;
+
+    public function __construct()
+    {
+        // dd(app('tenant'));
+        // If tenant is resolved via middleware, set it
+        $this->tenant = app()->bound('tenant') ? app('tenant') : null;
+    }
 
     public function dashboard()
     {
-        $agentsCount = Agent::count();
-        $tripsCount = Trip::count();
-        return view('dashboard', compact('agentsCount','tripsCount'));
+        if ($this->tenant) {
+            $agentsCount = Agent::where('company_id', $this->tenant->id)->count();
+            $tripsCount = Trip::where('company_id', $this->tenant->id)->count();
+        } else {
+            $agentsCount = Agent::count();
+            $tripsCount = Trip::count();
+        }
+
+        return view('dashboard', compact('agentsCount', 'tripsCount'));
     }
 
     public function index()
     {
-         $users = User::all();
-          $roles = Role::all();
-           $companies = Company::all();
-        return view('admin.users.manage_users', compact('users','roles','companies'));
+        if ($this->tenant) {
+            $users = User::where('company_id', $this->tenant->id)->get();
+            $roles = Role::all();
+            $companies = Company::where('id', $this->tenant->id)->get();
+        } else {
+            $users = User::all();
+            $roles = Role::all();
+            $companies = Company::all();
+        }
+
+        return view('admin.users.manage_users', compact('users', 'roles', 'companies'));
     }
 
     public function create()
     {
-         $roles = Role::all();
-         $companies = Company::all();
-        return view('admin.users.create',compact('roles','companies'));
+        $roles = Role::all();
+
+        if ($this->tenant) {
+            $companies = Company::where('id', $this->tenant->id)->get();
+        } else {
+            $companies = Company::all();
+        }
+
+        return view('admin.users.create', compact('roles', 'companies'));
     }
+
     public function store(Request $request)
     {
+        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+
         $user = User::create([
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
             'password'   => Hash::make($request->password),
-            'company_id'      => $request->company_id,
+            'company_id' => $companyId,
         ]);
 
         $role = Role::findOrFail($request->role);
         $user->assignRole($role->name);
-        
 
         return redirect()->route('users.create')->with('success', 'User created successfully.');
     }
@@ -59,11 +86,18 @@ class AdminController extends Controller
     {
         $user = User::findOrFail($id);
 
+        // Only allow update if tenant matches (or admin)
+        if ($this->tenant && $user->company_id != $this->tenant->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+
         $user->update([
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
-            'company_id' => $request->company_id, // ✅ save company_id
+            'company_id' => $companyId,
             'password'   => $request->filled('password') 
                                 ? Hash::make($request->password) 
                                 : $user->password,
@@ -75,13 +109,17 @@ class AdminController extends Controller
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
 
-
     public function destroy($id)
     {
         $user = User::findOrFail($id);
+
+        // Only allow deletion if tenant matches (or admin)
+        if ($this->tenant && $user->company_id != $this->tenant->id) {
+            abort(403, 'Unauthorized');
+        }
+
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
-
 }

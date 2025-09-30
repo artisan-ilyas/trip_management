@@ -24,11 +24,30 @@ class AuthenticatedSessionController extends Controller
      */
     public function store(LoginRequest $request): RedirectResponse
     {
-        $request->authenticate();
+        $request->validate([
+            'email' => ['required', 'string', 'email'],
+            'password' => ['required', 'string'],
+        ]);
 
-        $request->session()->regenerate();
+        $credentials = [
+            'email' => $request->email,
+            'password' => $request->password,
+        ];
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Check if we are on a tenant subdomain
+        if (app()->bound('tenant')) {
+            $company = app('tenant');
+            $credentials['company_id'] = $company->id; // restrict to tenant users
+        }
+
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate();
+            return redirect()->intended(route('dashboard', absolute: false));
+        }
+
+        return back()->withErrors([
+            'email' => __('auth.failed'),
+        ]);
     }
 
     /**

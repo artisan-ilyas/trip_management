@@ -25,6 +25,69 @@
         <div class="card-body">
 <form action="{{ route('bookings.store') }}" method="POST">
     @csrf
+    <div class="row mb-3">
+    <div class="col-md-12">
+        <div class="form-check mb-2">
+            <input type="checkbox" name="inline_trip" id="inlineTripCheckbox" class="form-check-input">
+            <label for="inlineTripCheckbox" class="form-check-label">Create New Trip Inline</label>
+        </div>
+
+       <div id="inlineTripFields" style="display:none; border:1px solid #ccc; padding:15px; border-radius:5px;">
+    <div class="row">
+        <div class="col-md-4">
+            <label>Trip Title</label>
+            <input type="text" name="trip_title" class="form-control">
+        </div>
+        <div class="col-md-4">
+            <label>Boat</label>
+            <select name="boat" id="boat" class="form-control">
+                <option value="">Select boat</option>
+                <option value="Samara 1 (5 rooms)">Samara 1 (5 rooms)</option>
+                <option value="Samara 1 (4 rooms)">Samara 1 (4 rooms)</option>
+                <option value="Mischief (5 rooms)">Mischief (5 rooms)</option>
+                <option value="Samara (6 rooms)">Samara (6 rooms)</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label>Trip Type</label>
+            <select name="trip_type" id="trip_type" class="form-control">
+                <option value="open">Open Trip</option>
+                <option value="private">Private Charter</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-md-6">
+            <label>Start Date</label>
+            <input type="date" name="start_date" class="form-control" id="start_date">
+        </div>
+        <div class="col-md-6">
+            <label>End Date</label>
+            <input type="date" name="end_date" class="form-control" id="end_date">
+        </div>
+    </div>
+
+    <div class="row mt-2" id="inlineGuestsRow" style="display:none;">
+        <div class="col-md-6">
+            <label>No Of Guests(Rooms)</label>
+            <select name="inline_guests" id="inline_guests" class="form-control">
+                <option value="">Select guests</option>
+            </select>
+        </div>
+        <div class="col-md-6">
+            <label>Price</label>
+            <input type="number" name="price" class="form-control" id="price">
+        </div>
+    </div>
+        <div class="row mt-2">
+        <div class="col-md-6">
+            <label>Region</label>
+            <input type="text" name="region" class="form-control" id="region">
+        </div>
+    </div>
+</div>
+    </div>
+</div>
 
     <div class="row mb-3">
         <div class="col-md-6">
@@ -53,7 +116,7 @@
     <div class="row mb-3">
        <div class="col-md-6">
     <label>No Of Guests(Rooms) </label>
-    <select name="guests" id="guests" class="form-control" required>
+    <select name="guests" id="guests" class="form-control">
         <option value="">Select number of guests</option>
     </select>
 </div>
@@ -155,6 +218,7 @@
     </div>
 </div>
 </div>
+<script src="https://code.jquery.com/jquery-3.6.1.min.js" ></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const tripSelect = document.getElementById('trip_id');
@@ -169,8 +233,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(response => response.json())
                 .then(data => {
                     guestsSelect.innerHTML = '<option value="">Select number of guests</option>';
-                    data.rooms.forEach(room => {
-                        guestsSelect.innerHTML += `<option value="${room}">${room}</option>`;
+                    data.rooms.forEach((room, index) => {
+                        guestsSelect.innerHTML += `<option value="${room}">Guest ${index+1} — Room ${room}</option>`;
                     });
                 })
                 .catch(() => {
@@ -225,6 +289,56 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("start_date").addEventListener("change", function () {
     const selectedStart = this.value;
     document.getElementById("end_date").setAttribute("min", selectedStart);
+});
+
+    $('#inlineTripCheckbox').on('change', function() {
+        $('#inlineTripFields').toggle(this.checked);
+    });
+
+
+    $('#inlineTripCheckbox').on('change', function() {
+    const checked = this.checked;
+    $('#inlineTripFields').toggle(checked);
+
+    // Disable/enable trip selection
+    $('#trip_id').prop('disabled', checked);
+
+    // Reset guests select when switching
+    $('#guests').html('<option value="">Select number of guests</option>');
+    // $('#guests').prop('disabled', checked);
+});
+
+$('#boat, #trip_type, #start_date, #end_date').on('change', function() {
+    const boat = $('#boat').val();
+    const type = $('#trip_type').val();
+
+    if (!boat || !type) return;
+
+    $.ajax({
+        url: '/boats/rooms',
+        method: 'GET',
+        data: { boat: boat, trip_type: type },
+        success: function(data) {
+            const guestSelect = $('#inline_guests');
+            guestSelect.empty();
+            guestSelect.append('<option value="">Select guests</option>');
+
+            if (type === 'open') {
+                data.rooms.forEach((room, idx) => {
+                    guestSelect.append(`<option value="${room}">Guest ${idx+1} — Room ${room}</option>`);
+                });
+            } else if (type === 'private') {
+                data.rooms.forEach((room) => {
+                    guestSelect.append(`<option value="${room}" selected>Room ${room}</option>`);
+                });
+            }
+
+            $('#inlineGuestsRow').show();
+        },
+        error: function() {
+            alert('Error fetching rooms for this boat');
+        }
+    });
 });
 
 

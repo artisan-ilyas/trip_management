@@ -59,15 +59,18 @@
         </select>
     </div>
 
-    <div class="col-md-6">
-        <label for="status" class="form-label">Company</label>
-      <select name="company_id" id="company_id" class="form-control" required>
-            <option value="" disabled selected>Select Company</option>
-            @foreach($companies as $company)
-                <option value="{{ $company->id }}">{{ $company->name }}</option>
-            @endforeach
-        </select>
-    </div>
+@if(auth()->user()->hasRole('admin') || auth()->user()->hasRole('super-admin'))
+<div class="col-md-6">
+    <label for="status" class="form-label">Company</label>
+    <select name="company_id" id="company_id" class="form-control" required>
+        <option value="" disabled selected>Select Company</option>
+        @foreach($companies as $company)
+            <option value="{{ $company->id }}">{{ $company->name }}</option>
+        @endforeach
+    </select>
+</div>
+@endif
+
 </div>
 
 

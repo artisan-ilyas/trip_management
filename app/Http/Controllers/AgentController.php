@@ -12,27 +12,46 @@ use Spatie\Permission\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
-
 class AgentController extends Controller
 {
-    // Agents
+    protected $tenant;
+
+    public function __construct()
+    {
+        $this->tenant = app()->bound('tenant') ? app('tenant') : null;
+    }
+
+    // Agents list
     public function index_agent()
     {
-        $agents = Agent::with('trips')->get();
-        $allTrips = Trip::all();
+        if ($this->tenant) {
+            $agents = Agent::with('trips')->where('company_id', $this->tenant->id)->get();
+            $allTrips = Trip::where('company_id', $this->tenant->id)->get();
+        } else {
+            $agents = Agent::with('trips')->get();
+            $allTrips = Trip::all();
+        }
 
         return view('admin.agents.index', compact('agents', 'allTrips'));
     }
 
-
     public function assignTrips(Request $request, $agentId)
     {
+        $agent = Agent::findOrFail($agentId);
 
-        // dd($request);
+        // Tenant check
+        if ($this->tenant && $agent->company_id != $this->tenant->id) {
+            abort(403, 'Unauthorized');
+        }
 
         $tripIds = $request->input('trips', []);
 
-        // Remove old assignments for this agent
+        // Only allow trips belonging to the tenant
+        if ($this->tenant) {
+            $tripIds = Trip::whereIn('id', $tripIds)->where('company_id', $this->tenant->id)->pluck('id')->toArray();
+        }
+
+        // Remove old assignments
         DB::table('agent_trip')->where('agent_id', $agentId)->delete();
 
         // Insert new assignments
@@ -53,28 +72,30 @@ class AgentController extends Controller
         return redirect()->back()->with('success', 'Trips assigned successfully.');
     }
 
-
-    // public function index_agent()
-    // {
-    //    $agents = Agent::with('trips')->get();
-    //     return view('admin.agents.index',compact('agents'));
-    // }
-
     public function create_agent()
     {
-        return view('admin.agents.create');
+        if ($this->tenant) {
+            $companies = Company::where('id', $this->tenant->id)->get();
+        } else {
+            $companies = Company::all();
+        }
+
+        return view('admin.agents.create', compact('companies'));
     }
 
     public function store_agent(Request $request)
     {
+        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+
         $agent = Agent::create([
             'first_name' => $request->first_name,
             'last_name'  => $request->last_name,
             'email'      => $request->email,
             'phone'      => $request->phone,
             'commission' => $request->commission,
-            'company' => $request->company,
+            'company_id' => $companyId,
         ]);
+
         return redirect()->route('agents.index')->with('success', 'Agent created successfully.');
     }
 
@@ -82,10 +103,14 @@ class AgentController extends Controller
     {
         $query = Agent::query();
 
+        if ($this->tenant) {
+            $query->where('company_id', $this->tenant->id);
+        }
+
         if ($request->name) {
             $query->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', '%' . $request->name . '%')
-                ->orWhere('last_name', 'like', '%' . $request->name . '%');
+                  ->orWhere('last_name', 'like', '%' . $request->name . '%');
             });
         }
 
@@ -131,36 +156,43 @@ class AgentController extends Controller
                     </form>
                 </td>
             </tr>';
-            // Note: You can optionally include modal HTML here if needed
         }
 
         return response()->json(['html' => $html]);
     }
 
-
     public function update_agent(Request $request, $id)
     {
         $agent = Agent::findOrFail($id);
 
+        if ($this->tenant && $agent->company_id != $this->tenant->id) {
+            abort(403, 'Unauthorized');
+        }
+
+        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+
         $agent->update([
-        'first_name' => $request->first_name,
-        'last_name'  => $request->last_name,
-        'email'      => $request->email,
-        'phone'      => $request->phone,
-        'commission' => $request->commission,
-        'company' => $request->company,
+            'first_name' => $request->first_name,
+            'last_name'  => $request->last_name,
+            'email'      => $request->email,
+            'phone'      => $request->phone,
+            'commission' => $request->commission,
+            'company_id' => $companyId,
         ]);
 
         return redirect()->route('agents.index')->with('success', 'Agent updated successfully.');
     }
 
-
     public function destroy_agent($id)
     {
         $agent = Agent::findOrFail($id);
+
+        if ($this->tenant && $agent->company_id != $this->tenant->id) {
+            abort(403, 'Unauthorized');
+        }
+
         $agent->delete();
 
         return redirect()->route('agents.index')->with('success', 'Agent deleted successfully.');
     }
-
 }

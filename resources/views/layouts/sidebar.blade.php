@@ -87,12 +87,42 @@
 @endcan
 
 @can('trips')
-       <li class="nav-item">
-    <a href="/trips" class="nav-link {{ request()->is('trips','create-trip','trips/*') ? 'active' : '' }}">
-        <i class="nav-icon fas fa-plane"></i>
-        <p>Availability</p>
-    </a>
-</li>
+       <!-- Availability / Trips -->
+                <li class="nav-item {{ request()->is('trips*') || request()->is('availabilities*') ? 'menu-open' : '' }}">
+                    <a href="#" class="nav-link {{ request()->is('trips*') || request()->is('availabilities*') ? 'active' : '' }}">
+                        <i class="nav-icon fas fa-plane"></i>
+                        <p>
+                            Availability
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        <li class="nav-item">
+                            <a href="{{ route('trips.index') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Availability</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('rate-plans.index') }}" class="nav-link {{ request()->is('rate-plans*') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Rate Plans</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('payment-policies.index') }}" class="nav-link {{ request()->is('payment-policies*') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Payment Policies</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ route('cancellation-policies.index') }}" class="nav-link {{ request()->is('cancellation-policies*') ? 'active' : '' }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Cancellation Policies</p>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
 @endcan
 
 @can('booking')

@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 
 class BookingController extends Controller
 {
-         // Bookings
+    // Bookings
     public function booking_index(Request $request)
     {
         $bookings = Booking::with(['trip', 'agent'])
@@ -88,34 +88,64 @@ class BookingController extends Controller
     
 
 
-   public function store_booking(Request $request)
-    {
-        $validated = $request->validate([
-            'trip_id' => 'required|exists:trips,id',
-            'customer_name' => 'required|string|max:255',
-            'guests' => 'required|integer|min:1',
-            'source' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'phone_number' => 'nullable|string|max:20',
-            'nationality' => 'nullable|string|max:255',
-            'passport_number' => 'nullable|string|max:255',
-            'booking_status' => 'nullable|in:pending,confirmed,cancelled',
-            'pickup_location_time' => 'nullable|string|max:255',
-            'addons' => 'nullable|string|max:255',
-            'room_preference' => 'nullable|in:single,double,suite',
-            'agent_id' => 'nullable|exists:agents,id',
-            'comments' => 'nullable|string',
-            'notes' => 'nullable|string',
+ public function store_booking(Request $request)
+{
+    // If creating inline availability (Trip)
+    if (!$request->trip_id && $request->inline_trip) {
+        $trip = Trip::create([
+            'title'      => $request->trip_title,
+            'boat'       => $request->boat,
+            'trip_type'  => $request->trip_type,
+            'start_date' => $request->start_date,
+            'end_date'   => $request->end_date,
+            'status'     => 'Booked', // trips = active/inactive
+            'guests'     => $request->inline_guests,
+            'price'      => $request->price,
+            'region'     => $request->region,
         ]);
 
-        // Generate unique token
-        $validated['token'] = Str::random(32);
-
-        $booking = Booking::create($validated);
-
-        return redirect()->route('bookings.index')
-            ->with('success', 'Booking created successfully. Share this link with the user: ' . route('guest.form', $booking->token));
+        $request->merge(['trip_id' => $trip->id]);
     }
+
+    // Validation
+    $validated = $request->validate([
+        'trip_id'            => 'required|exists:trips,id',
+        'customer_name'      => 'required|string|max:255',
+        // Guests rule depends on inline_trip
+        'guests'             => $request->inline_trip ? 'nullable' : 'required|integer|min:1',
+        'inline_guests'      => $request->inline_trip ? 'required|integer|min:1' : 'nullable',
+        'source'             => 'required|string|max:255',
+        'email'              => 'nullable|email',
+        'phone_number'       => 'nullable|string|max:20',
+        'nationality'        => 'nullable|string|max:255',
+        'passport_number'    => 'nullable|string|max:255',
+        'booking_status'     => 'nullable|in:pending,confirmed,cancelled',
+        'pickup_location_time' => 'nullable|string|max:255',
+        'addons'             => 'nullable|string|max:255',
+        'room_preference'    => 'nullable|in:single,double,suite',
+        'agent_id'           => 'nullable|exists:agents,id',
+        'comments'           => 'nullable|string',
+        'notes'              => 'nullable|string',
+    ]);
+
+    // Default booking_status
+    if (empty($validated['booking_status'])) {
+        $validated['booking_status'] = 'pending';
+    }
+
+    // Always map guests correctly for Booking
+    if ($request->inline_trip) {
+        $validated['guests'] = $request->inline_guests;
+    }
+
+    // Generate unique token
+    $validated['token'] = Str::random(32);
+
+    $booking = Booking::create($validated);
+
+    return redirect()->route('bookings.index')
+        ->with('success', 'Booking created successfully. Share this link with the user: ' . route('guest.form', $booking->token));
+}
 
     public function show_booking($id)
     {
@@ -135,31 +165,42 @@ class BookingController extends Controller
 
 
 
-    public function update_booking(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'trip_id' => 'required|exists:trips,id',
-            'customer_name' => 'required|string|max:255',
-            'guests' => 'required|integer|min:1',
-            'source' => 'required|string|max:255',
-            'email' => 'nullable|email',
-            'phone_number' => 'nullable|string|max:20',
-            'nationality' => 'nullable|string|max:255',
-            'passport_number' => 'nullable|string|max:255',
-            'booking_status' => 'nullable|in:pending,confirmed,cancelled',
-            'pickup_location_time' => 'nullable|string|max:255',
-            'addons' => 'nullable|string|max:255',
-            'room_preference' => 'nullable|in:single,double,suite',
-            'agent_id' => 'nullable|exists:agents,id',
-            'comments' => 'nullable|string',
-            'notes' => 'nullable|string',
-        ]);
+  public function update_booking(Request $request, $id)
+{
+    $validated = $request->validate([
+        'trip_id' => 'required|exists:trips,id',
+        'customer_name' => 'required|string|max:255',
+        'guests' => 'required|integer|min:1',
+        'source' => 'required|string|max:255',
+        'email' => 'nullable|email',
+        'phone_number' => 'nullable|string|max:20',
+        'nationality' => 'nullable|string|max:255',
+        'passport_number' => 'nullable|string|max:255',
+        'booking_status' => 'nullable|in:pending,confirmed,cancelled',
+        'pickup_location_time' => 'nullable|string|max:255',
+        'addons' => 'nullable|string|max:255',
+        'room_preference' => 'nullable|in:single,double,suite',
+        'agent_id' => 'nullable|exists:agents,id',
+        'comments' => 'nullable|string',
+        'notes' => 'nullable|string',
+        'dp_paid' => 'nullable|boolean',
+    ]);
 
-        $booking = Booking::findOrFail($id);
-        $booking->update($validated);
+    $booking = Booking::findOrFail($id);
 
-        return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+    // ✅ If DP is paid, force status = confirmed
+    if ($request->has('dp_paid') && $request->dp_paid) {
+        $validated['dp_paid'] = true;
+        $validated['booking_status'] = 'confirmed';
+    } else {
+        $validated['dp_paid'] = false;
     }
+
+    $booking->update($validated);
+
+    return redirect()->route('bookings.index')->with('success', 'Booking updated successfully.');
+}
+
 
 
     public function destroy_booking($id)
@@ -169,4 +210,28 @@ class BookingController extends Controller
 
         return redirect()->route('bookings.index')->with('success', 'Booking deleted successfully.');
     }
+
+    public function getRoomsByBoat(Request $request)
+    {
+        $boatName = $request->input('boat'); // e.g. "Samara 1 (5 rooms)"
+        $tripType = $request->input('trip_type'); // 'open' or 'private'
+
+        if (!$boatName) {
+            return response()->json(['rooms' => []]);
+        }
+
+        // Extract total rooms from boat name
+        preg_match('/\((\d+)\s*rooms?\)/i', $boatName, $matches);
+        $totalRooms = isset($matches[1]) ? (int)$matches[1] : 0;
+
+        $availableRooms = range(1, $totalRooms);
+
+        // If Private Charter, auto-attach all rooms (we just return all)
+        // For Open Trip, user can select multiple but not all
+        return response()->json([
+            'rooms' => $availableRooms
+        ]);
+    }
+
 }
+

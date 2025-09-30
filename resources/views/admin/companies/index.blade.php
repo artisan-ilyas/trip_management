@@ -55,10 +55,10 @@
     <a href="{{ route('company.show', $company->id) }}" class="btn btn-sm btn-success">
         View
     </a>
-<a href="http://{{ $company->slug }}.domain.test"
-   class="btn btn-sm btn-warning" target="_blank">
-   Tenant Link
-</a>
+    <a href="{{ (app()->environment('production') ? 'https://' : 'http://') . $company->slug . '.' . config('app.domain_name') }}"
+    class="btn btn-sm btn-warning" target="_blank">
+    Tenant Link
+    </a>
 
 
     <button class="btn btn-sm btn-primary edit-btn"

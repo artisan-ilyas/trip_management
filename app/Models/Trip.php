@@ -34,28 +34,40 @@ class Trip extends Model
         return $this->belongsTo(Guest::class, 'leading_guest_id');
     }
     // Trip.php
-public function guestList()
-{
-    return $this->hasMany(Guest::class);
-}
+    public function guestList()
+    {
+        return $this->hasMany(Guest::class);
+    }
 
-// Guest.php
-public function otherGuests()
-{
-    return $this->hasMany(OtherGuest::class);
-}
+    // Guest.php
+    public function otherGuests()
+    {
+        return $this->hasMany(OtherGuest::class);
+    }
 
-public function agents()
-{
-    return $this->belongsToMany(Agent::class);
-}
+    public function agents()
+    {
+        return $this->belongsToMany(Agent::class);
+    }
 
-//booking
-public function bookings()
-{
-    return $this->hasMany(Booking::class);
-}
+    //booking
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
 
+    public function ratePlan()
+    { 
+        return $this->belongsTo(RatePlan::class); 
+    }
+    public function paymentPolicy()
+    { 
+        return $this->belongsTo(PaymentPolicy::class); 
+    }
+    public function cancellationPolicy()
+    { 
+        return $this->belongsTo(CancellationPolicy::class); 
+    }
 
 }
 

@@ -94,11 +94,16 @@
                 <option value="cancelled" {{ $booking->booking_status == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
             </select>
         </div>
+        
+        
         <div class="col-md-6">
             <label>Pickup Location & Time</label>
             <input type="text" name="pickup_location_time" class="form-control" value="{{ $booking->pickup_location_time }}">
         </div>
     </div>
+    
+
+
 
     <div class="row mb-3">
         <div class="col-md-6">
@@ -128,6 +133,13 @@
             <textarea name="comments" class="form-control">{{ $booking->comments }}</textarea>
         </div>
     </div>
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label>DP Paid</label>
+        <input type="checkbox" name="dp_paid" value="1" 
+            {{ $booking->dp_paid ? 'checked' : '' }}>
+    </div>
+</div>
 
     <button type="submit" class="btn btn-primary">Update Booking</button>
 </form>

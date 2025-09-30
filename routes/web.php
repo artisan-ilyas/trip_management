@@ -3,27 +3,148 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AgentController;
 use App\Http\Controllers\BookingController;
+use App\Http\Controllers\CancellationPolicyController;
+use App\Http\Controllers\CancellationPolicyRuleController;
 use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\PublicBookingController;
 use App\Http\Controllers\FinanceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\GuestController;
+use App\Http\Controllers\PaymentPolicyController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\RatePlanRuleController;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\TripController;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 
 
-Route::domain('{slug}.domain.test')->group(function () {
-    Route::get('/', function ($slug) {
-        $company = \App\Models\Company::where('slug', $slug)->firstOrFail();
-        return "Tenant: " . $company->name;
+Route::domain('{slug}.' . env('DOMAIN_NAME'))->middleware(['tenantresolver'])->group(function () {
+// Public routes
+Route::get('/guest/form/{token}', [GuestController::class, 'show'])->name('guest.form');
+Route::post('/guest/form/{token}', [GuestController::class, 'submit'])->name('guest.form.submit');
+
+
+
+// Dashboard (any authenticated + verified user)
+Route::get('/', [AdminController::class, 'dashboard'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
+
+// Authenticated users
+Route::middleware('auth')->group(function () {
+
+    // User profile (all authenticated roles can access)
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+  
+
+    /*
+    |--------------------------------------------------------------------------
+    | Admin + Super Admin Routes
+    |--------------------------------------------------------------------------
+    | Both admin and super-admin can access these
+    */
+    // ================== Agents ==================
+    Route::middleware(['role:admin|sales|companies'])->group(function () {
+        Route::get('/agents', [AgentController::class, 'index_agent'])->name('agents.index');
+        Route::get('/create-agent', [AgentController::class, 'create_agent'])->name('agents.create');
+        Route::post('/store-agent', [AgentController::class, 'store_agent'])->name('agent.store');
+        Route::post('agents/{id}', [AgentController::class, 'update_agent'])->name('agents.update');
+        Route::delete('agents/{id}', [AgentController::class, 'destroy_agent'])->name('agents.destroy');
+        Route::get('/agents/filter', [AgentController::class, 'filter_agent'])->name('agents.filter');
+        Route::post('/agents/{agent}/assign-trips', [AgentController::class, 'assignTrips'])->name('agents.assignTrips');
+        
+        // Manage Users
+        Route::get('/users', [AdminController::class, 'index'])->name('users.index');
+        Route::get('/create-user', [AdminController::class, 'create'])->name('users.create');
+        Route::post('/store-user', [AdminController::class, 'store'])->name('users.store');
+        Route::post('users/{id}', [AdminController::class, 'update'])->name('users.update');
+        Route::delete('users/{id}', [AdminController::class, 'destroy'])->name('users.destroy');
+    });
+
+    // ================== Trips ==================
+    Route::middleware(['role:admin|sales|companies'])->group(function () {
+        Route::get('/trips', [TripController::class, 'trip_index'])->name('trips.index');
+        Route::get('/create-trip', [TripController::class, 'create_trip'])->name('trips.create');
+        Route::post('/store-trip', [TripController::class, 'store_trip'])->name('trips.store');
+        Route::post('trips/{id}', [TripController::class, 'update_trip'])->name('trips.update');
+        Route::get('/trips/{id}', [TripController::class, 'show'])->name('trips.show');
+        Route::delete('trips/{id}', [TripController::class, 'destroy_trip'])->name('trips.destroy');
+        Route::get('/admin/trips/filter', [TripController::class, 'filter'])->name('trips.filter');
+        Route::get('/admin/trips/events', [TripController::class, 'events'])->name('trips.events');
+        Route::get('/trips/{trip}/rooms', [TripController::class, 'getRooms'])->name('trips.rooms');
+    });
+
+    // ================== Finances ==================
+    Route::middleware(['role:admin|companies'])->group(function () {
+        Route::get('/finances', [FinanceController::class, 'finance_index'])->name('finances.index');
+        Route::get('/create-finance', [FinanceController::class, 'create_finance'])->name('finances.create');
+        Route::post('/store-finance', [FinanceController::class, 'store_finance'])->name('finances.store');
+        Route::post('finances/{id}', [FinanceController::class, 'update_finance'])->name('finances.update');
+        Route::delete('finances/{id}', [FinanceController::class, 'destroy_finance'])->name('finances.destroy');
+    });
+
+    // ================== Guests ==================
+    Route::middleware(['role:admin|sales|companies'])->group(function () {
+        Route::get('/guests', [GuestController::class, 'guest_index'])->name('guest.index');
+        Route::post('/guest-store', [GuestController::class, 'store'])->name('guest.store');
+        Route::get('/guest/{id}', [GuestController::class, 'show_guest'])->name('guest.show');
+        Route::get('/guest/{id}/pdf', [GuestController::class, 'download_pdf'])->name('guest.download.pdf');
+    });
+
+    // ================== Bookings ==================
+    Route::middleware(['role:admin|sales|companies'])->group(function () {
+        Route::get('/bookings', [BookingController::class, 'booking_index'])->name('bookings.index');
+        Route::get('/create-booking', [BookingController::class, 'create_booking'])->name('bookings.create');
+        Route::post('/store-booking', [BookingController::class, 'store_booking'])->name('bookings.store');
+        Route::put('booking/{id}', [BookingController::class, 'update_booking'])->name('bookings.update');
+        Route::get('/booking/{id}', [BookingController::class, 'show_booking'])->name('bookings.show');
+        Route::get('/booking/edit/{id}', [BookingController::class, 'edit_booking'])->name('bookings.edit');
+        Route::delete('booking/{id}', [BookingController::class, 'destroy_booking'])->name('bookings.destroy');
+    });
+
+
+    Route::resource('rate-plans', RatePlanController::class);
+    Route::prefix('rate-plan-rules')->group(function () {
+        Route::get('/{rate_plan}', [RatePlanRuleController::class, 'index'])->name('rate-plan-rules.index');
+        Route::get('/create/{id}', [RatePlanRuleController::class, 'create'])->name('rate-plan-rules.create');
+        Route::post('/{id}', [RatePlanRuleController::class, 'store'])->name('rate-plan-rules.store');
+        Route::get('/{id}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
+        Route::put('/{id}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
+        Route::delete('/{id}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
+    });   
+    Route::resource('payment-policies', PaymentPolicyController::class);
+    Route::resource('cancellation-policies', CancellationPolicyController::class);
+    Route::prefix('cancellation-policy-rules')->group(function () {
+        Route::get('/{id}', [CancellationPolicyRuleController::class, 'index'])->name('cancellation-policy-rules.index');
+        Route::get('/create/{id}', [CancellationPolicyRuleController::class, 'create'])->name('cancellation-policy-rules.create');
+        Route::post('/{id}', [CancellationPolicyRuleController::class, 'store'])->name('cancellation-policy-rules.store');
+        Route::get('/{id}/edit', [CancellationPolicyRuleController::class, 'edit'])->name('cancellation-policy-rules.edit');
+        Route::put('/{id}', [CancellationPolicyRuleController::class, 'update'])->name('cancellation-policy-rules.update');
+        Route::delete('/{id}', [CancellationPolicyRuleController::class, 'destroy'])->name('cancellation-policy-rules.destroy');
     });
 });
+});
+
+// routes/api.php (or web.php if you want web sessions)
+Route::prefix('public')->group(function () {
+    Route::get('/boats', [PublicBookingController::class, 'boats']);
+    Route::get('/availabilities', [PublicBookingController::class, 'availabilities']);
+    Route::get('/availability/{id}', [PublicBookingController::class, 'availabilityDetail']);
+    Route::post('/prebooking', [PublicBookingController::class, 'prebooking']);
+    Route::get('/ics/boat/{boat}', [PublicBookingController::class, 'icsFeed']); // optional
+});
+
+Route::get('/boats/rooms', [BookingController::class, 'getRoomsByBoat']);
+
 
 
 
@@ -172,6 +293,25 @@ Route::middleware('auth')->group(function () {
         Route::delete('company/{id}', [CompanyController::class, 'destroy_company'])->name('company.destroy');
     });
 
+
+    Route::resource('rate-plans', RatePlanController::class);
+    Route::prefix('rate-plan-rules')->group(function () {
+        Route::get('/{rate_plan}', [RatePlanRuleController::class, 'index'])->name('rate-plan-rules.index');
+        Route::get('/create/{id}', [RatePlanRuleController::class, 'create'])->name('rate-plan-rules.create');
+        Route::post('/{id}', [RatePlanRuleController::class, 'store'])->name('rate-plan-rules.store');
+        Route::get('/{id}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
+        Route::put('/{id}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
+        Route::delete('/{id}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
+    });    Route::resource('payment-policies', PaymentPolicyController::class);
+        Route::resource('cancellation-policies', CancellationPolicyController::class);
+    Route::prefix('cancellation-policy-rules')->group(function () {
+        Route::get('/{id}', [CancellationPolicyRuleController::class, 'index'])->name('cancellation-policy-rules.index');
+        Route::get('/create/{id}', [CancellationPolicyRuleController::class, 'create'])->name('cancellation-policy-rules.create');
+        Route::post('/{id}', [CancellationPolicyRuleController::class, 'store'])->name('cancellation-policy-rules.store');
+        Route::get('/{id}/edit', [CancellationPolicyRuleController::class, 'edit'])->name('cancellation-policy-rules.edit');
+        Route::put('/{id}', [CancellationPolicyRuleController::class, 'update'])->name('cancellation-policy-rules.update');
+        Route::delete('/{id}', [CancellationPolicyRuleController::class, 'destroy'])->name('cancellation-policy-rules.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';
