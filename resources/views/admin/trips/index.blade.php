@@ -166,6 +166,15 @@ function loadCalendar() {
                     <label>Notes</label>
                     <textarea id="tripNotes" class="form-control" rows="3">${props.notes || ''}</textarea>
                 </div>
+
+                <!-- Booking Widget Button -->
+                <div class="mt-3 text-center">
+                    <button type="button" class="btn btn-info" 
+                        onclick="openBookingWidget('${props.trip_id}', '${props.boat}', '${props.company}')">
+                        View Booking Widget
+                    </button>
+
+                </div>
             </form>
         `,
         showCancelButton: true,
@@ -227,6 +236,25 @@ function loadCalendar() {
 
     calendar.render();
 }
+
+
+function openBookingWidget(tripId, boat, company) {
+    let companyName = company && company !== "" ? company : "{{ auth()->user()->company->name ?? 'SAMARA' }}";
+    let boatSlug = boat ? boat.replace(/\s+/g, '-') : 'default-boat';
+
+    let url = `http://trip_management.test/public/widget?company=${companyName}&boat=${boatSlug}&trip=${tripId}`;
+
+    Swal.fire({
+        title: "Booking Widget",
+        html: `<iframe src="${url}" style="width:100%;height:600px;border:0;"></iframe>`,
+        width: 800,
+        showConfirmButton: false,
+        showCloseButton: true
+    });
+}
+
+
+
 
 function getFilters() {
     return {

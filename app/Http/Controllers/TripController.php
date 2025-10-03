@@ -187,7 +187,15 @@ public function create_trip()
                 'guests' => $trip->guests,
                 'price' => $trip->price,
                 'notes' => $trip->notes,
+                'extendedProps' => [
+                    'trip_id' => $trip->id,
+                    'boat'    => $trip->boat,
+                    'company' => $trip->company?->name ?? 1,
+                ]
             ];
+
+            // dd($events);
+
         }
 
         return response()->json($events);

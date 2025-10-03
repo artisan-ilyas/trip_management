@@ -135,12 +135,10 @@ Route::middleware('auth')->group(function () {
 });
 
 // routes/api.php (or web.php if you want web sessions)
-Route::prefix('public')->group(function () {
-    Route::get('/boats', [PublicBookingController::class, 'boats']);
-    Route::get('/availabilities', [PublicBookingController::class, 'availabilities']);
-    Route::get('/availability/{id}', [PublicBookingController::class, 'availabilityDetail']);
-    Route::post('/prebooking', [PublicBookingController::class, 'prebooking']);
-    Route::get('/ics/boat/{boat}', [PublicBookingController::class, 'icsFeed']); // optional
+Route::prefix('public')->group(function() {
+    Route::get('/widget', [PublicBookingController::class, 'widget'])->name('public.widget');
+    Route::get('/availability/{id}', [PublicBookingController::class, 'availability'])->name('public.availability');
+    Route::post('/prebooking', [PublicBookingController::class, 'prebooking'])->name('public.prebook');
 });
 
 Route::get('/boats/rooms', [BookingController::class, 'getRoomsByBoat']);
@@ -156,7 +154,7 @@ Route::get('/test-pdf', function () {
     return $pdf->download('test.pdf');
 });
 
-Route::get('/calendar-test', function () {
+Route::get('/test', function () {
     return view('calendar_test');
 });
 
