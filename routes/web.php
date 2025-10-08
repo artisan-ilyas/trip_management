@@ -306,11 +306,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/{rate_plan}', [RatePlanRuleController::class, 'index'])->name('rate-plan-rules.index');
         Route::get('/create/{id}', [RatePlanRuleController::class, 'create'])->name('rate-plan-rules.create');
         Route::post('/{id}', [RatePlanRuleController::class, 'store'])->name('rate-plan-rules.store');
-        Route::get('/{id}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
-        Route::put('/{id}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
-        Route::delete('/{id}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
-    });    Route::resource('payment-policies', PaymentPolicyController::class);
-        Route::resource('cancellation-policies', CancellationPolicyController::class);
+        Route::get('/{ratePlanId}/rules/{rule}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
+        Route::put('/{ratePlanId}/rules/{rule}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
+        Route::delete('/{ratePlanId}/rules/{rule}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
+    });    
+    Route::resource('payment-policies', PaymentPolicyController::class)->parameters(['payment-policies' => 'policy']);
+    Route::resource('cancellation-policies', CancellationPolicyController::class);
     Route::prefix('cancellation-policy-rules')->group(function () {
         Route::get('/{id}', [CancellationPolicyRuleController::class, 'index'])->name('cancellation-policy-rules.index');
         Route::get('/create/{id}', [CancellationPolicyRuleController::class, 'create'])->name('cancellation-policy-rules.create');
