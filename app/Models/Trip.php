@@ -78,5 +78,10 @@ class Trip extends Model
         return $this->belongsTo(CancellationPolicy::class); 
     }
 
+    public function company()
+    { 
+        return $this->belongsTo(Company::class); 
+    }
+
 }
 

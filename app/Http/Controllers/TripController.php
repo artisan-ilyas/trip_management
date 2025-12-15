@@ -190,7 +190,7 @@ public function create_trip()
                 'extendedProps' => [
                     'trip_id' => $trip->id,
                     'boat'    => $trip->boat,
-                    'company' => $trip->company->id,
+                    // 'company' => $trip->company->id,
                 ]
             ];
 
