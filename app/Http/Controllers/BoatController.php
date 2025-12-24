@@ -90,7 +90,7 @@ class BoatController extends Controller
     /**
      * Delete boat
      */
-    public function destroy(Boat $boat)
+    public function destroy_boat(Boat $boat)
     {
         $boat->delete();
 
