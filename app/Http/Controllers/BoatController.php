@@ -125,7 +125,7 @@ public function room_index($id)
             }),
         ];
     });
-// dd($roomsData);
+// dd($roomsData); 
 
     return response()->json(['rooms' => $roomsData]);
 }
