@@ -139,11 +139,11 @@ class BookingController extends Controller
                 'start_date' => 'required|date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 // 'guests' => 'required|integer|min:1',
-                'price' => 'required|numeric',
+                'price' => 'nullable|numeric',
                 'rate_plan_id' => 'required',
                 'payment_policy_id' => 'required',
                 'cancellation_policy_id' => 'required',
-                'notes' => 'nullable|string',
+                'notes' => 'nullable|string', 
                 'company_id' => 'required'
             ]);
 
@@ -197,7 +197,7 @@ class BookingController extends Controller
         // Now validate booking fields
         $validated = $request->validate([
             'trip_id' => 'required|exists:trips,id',
-            'room_id' => 'required|exists:rooms,id',
+            'room_id' => 'nullable',
             'customer_name' => 'required|string|max:255',
             // 'guests' => 'nullable',
             'source' => 'required|string|max:255',
@@ -440,7 +440,7 @@ public function getEvents(Request $request)
         $events[] = [
             'id' => $trip->id,
             'title' => $trip->title,
-            'start' => $trip->start_date,
+            'start' => $trip->start_date, 
             'end' => \Carbon\Carbon::parse($trip->end_date)->addDay()->format('Y-m-d'), // add 1 day for FC display
             'color' => $availableRooms > 0 ? '#34d399' : '#f87171', // green if available, red if fully booked
             'extendedProps' => [
