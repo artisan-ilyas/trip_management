@@ -13,7 +13,7 @@ class Room extends Model
         'price_per_night',
         'status',
     ];
-     public function boat()
+    public function boat()
     {
         return $this->belongsTo(Boat::class);
     }
@@ -21,5 +21,10 @@ class Room extends Model
     public function bookings()
     {
         return $this->hasMany(Booking::class);
+    }
+
+    public function trips()
+    {
+        return $this->belongsTo(Trip::class);
     }
 }

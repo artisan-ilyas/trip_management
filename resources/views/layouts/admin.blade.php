@@ -26,7 +26,18 @@
   <!-- summernote -->
   <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-bs4.min.css') }}">
 
+
+  @vite(['resources/js/app.js'])
+
+
 </head>
+@if(isset($iframe))
+<style>
+body { margin:0; }
+.navbar, .sidebar { display:none; }
+</style>
+@endif
+
 <body class="hold-transition">
 <div class="wrapper">
     @include('layouts.navbar')
