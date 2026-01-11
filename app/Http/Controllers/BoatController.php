@@ -100,36 +100,58 @@ public function boat_index()
     }
 
 
-// Controller method
-public function room_index($id)
-{
+    // Controller method
+    public function room_index($id)
+    {
 
-    $boat = Boat::find($id);
-    $rooms = $boat->rooms()->with('bookings')->get();
+        $boat = Boat::find($id);
+        $rooms = $boat->rooms()->with('bookings')->get();
 
-    $roomsData = $rooms->map(function ($room) {
-        return [
-            'id' => $room->id,
-            'room_name' => $room->room_name,
-            'capacity' => $room->capacity,
-            'status' => $room->status,
-            'is_booked' => $room->bookings->count() > 0,
-            'bookings' => $room->bookings->map(function ($booking) {
-                return [
-                    'id' => $booking->id,
-                    'trip_title' => $booking->trip->title,
-                    'start_date' => $booking->trip->start_date,
-                    'end_date' => $booking->trip->end_date,
-                    'booking_status' => $booking->booking_status,
-                ];
-            }),
-        ];
-    });
-// dd($roomsData);
- 
-    return response()->json(['rooms' => $roomsData]);
-}
+        $roomsData = $rooms->map(function ($room) {
+            return [
+                'id' => $room->id,
+                'room_name' => $room->room_name,
+                'capacity' => $room->capacity,
+                'status' => $room->status,
+                'is_booked' => $room->bookings->count() > 0,
+                'bookings' => $room->bookings->map(function ($booking) {
+                    return [
+                        'id' => $booking->id,
+                        'trip_title' => $booking->trip->title,
+                        'start_date' => $booking->trip->start_date,
+                        'end_date' => $booking->trip->end_date,
+                        'booking_status' => $booking->booking_status,
+                    ];
+                }),
+            ];
+        });
+    // dd($roomsData);
 
+        return response()->json(['rooms' => $roomsData]);
+    }
+
+    public function show(Boat $boat)
+    {
+        $id = $boat->id;
+        $boat = Boat::with(['rooms', 'trip.bookings'])->findOrFail($id);
+
+            $bookings = Booking::whereHas('trip', fn($q)=>$q->where('boat_id', $id))
+                ->with('trip')
+                ->get();
+
+            $nightsBooked = $bookings->sum(fn($b)=>\Carbon\Carbon::parse($b->trip->end_date)->diffInDays($b->trip->start_date));
+            $totalNights = $boat->trip->sum(fn($t)=>\Carbon\Carbon::parse($t->end_date)->diffInDays($t->start_date));
+            $occupancyRate = $totalNights ? round($nightsBooked / $totalNights * 100, 2) : 0;
+
+            $directCount = $bookings->where('source','Direct')->count();
+            $agentCount = $bookings->where('source','By Agent')->count();
+
+            $revenue = auth()->user()->hasRole('admin') ? $bookings->sum('price') : null;
+
+            return view('admin.boats.show', compact(
+                'boat','bookings','nightsBooked','occupancyRate','directCount','agentCount','revenue'
+            ));
+    }
 
 
 }

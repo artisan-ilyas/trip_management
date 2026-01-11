@@ -56,12 +56,14 @@
                                             title="View Rooms">
                                         <i class="fas fa-eye"></i>
                                         <span class="badge bg-light text-dark ms-1">{{ $boat->rooms->count() }}</span>
-                                    </button> 
+                                    </button>
 
                                     </td>
                                     <td>{{ $boat->created_at->format('d M Y') }}</td>
                                     <td class="text-center">
                                         <a href="{{ route('room.index', $boat->id) }}" class="btn btn-sm btn-info">Rooms</a>
+                                        <a href="{{ route('boats.show', $boat->id) }}" class="btn btn-sm btn-primary">View Calendar</a>
+
                                         <a href="javascript:void(0);" class="btn btn-sm btn-primary edit-boat-btn"
                                            data-id="{{ $boat->id }}"
                                            data-name="{{ $boat->name }}"
@@ -172,7 +174,7 @@ $(document).ready(function() {
 data.rooms.forEach(r => {
     html += `<li class="list-group-item d-flex flex-column">
                 <span>
-                    <strong>${r.room_name}</strong> (Capacity: ${r.capacity}) 
+                    <strong>${r.room_name}</strong> (Capacity: ${r.capacity})
                     <span style="color:${r.is_booked ? 'red' : 'green'}">
                         ${r.is_booked ? 'Booked' : 'Available'}
                     </span>

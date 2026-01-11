@@ -31,7 +31,7 @@ class Trip extends Model
         'payment_policy_snapshot_json',
         'cancellation_policy_snapshot_json',
         'dp_amount',
-        
+
     ];
 
     public function agent()
@@ -67,27 +67,33 @@ class Trip extends Model
     }
 
     public function ratePlan()
-    { 
-        return $this->belongsTo(RatePlan::class); 
+    {
+        return $this->belongsTo(RatePlan::class);
     }
     public function paymentPolicy()
-    { 
-        return $this->belongsTo(PaymentPolicy::class); 
+    {
+        return $this->belongsTo(PaymentPolicy::class);
     }
     public function cancellationPolicy()
-    { 
-        return $this->belongsTo(CancellationPolicy::class); 
+    {
+        return $this->belongsTo(CancellationPolicy::class);
     }
 
     public function company()
-    { 
-        return $this->belongsTo(Company::class); 
+    {
+        return $this->belongsTo(Company::class);
     }
 
     public function boat()
-    { 
-        return $this->belongsTo(Boat::class); 
+    {
+        return $this->belongsTo(Boat::class);
     }
+
+    public function rooms()
+    {
+        return $this->belongsToMany(Room::class, 'room_id')->withPivot('available');
+    }
+
 
 }
 

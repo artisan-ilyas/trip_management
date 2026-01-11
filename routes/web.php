@@ -25,8 +25,8 @@ use App\Http\Controllers\RolePermissionController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\TripController;
 use Barryvdh\DomPDF\Facade\Pdf;
-
-
+use App\Http\Controllers\CalendarController;
+use App\Http\Controllers\FleetCalendarController;
 
 Route::domain('{slug}.' . env('DOMAIN_NAME'))->middleware(['tenantresolver'])->group(function () {
 // Public routes
@@ -36,9 +36,9 @@ Route::post('/guest/form/{token}', [GuestController::class, 'submit'])->name('gu
 
 
 // Dashboard (any authenticated + verified user)
-Route::get('/', [AdminController::class, 'dashboard'])
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+// Route::get('/', [AdminController::class, 'dashboard'])
+//     ->middleware(['auth', 'verified'])
+//     ->name('dashboard');
 
 // Authenticated users
 Route::middleware('auth')->group(function () {
@@ -48,7 +48,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-  
+
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +65,7 @@ Route::middleware('auth')->group(function () {
         Route::delete('agents/{id}', [AgentController::class, 'destroy_agent'])->name('agents.destroy');
         Route::get('/agents/filter', [AgentController::class, 'filter_agent'])->name('agents.filter');
         Route::post('/agents/{agent}/assign-trips', [AgentController::class, 'assignTrips'])->name('agents.assignTrips');
-        
+
         // Manage Users
         Route::get('/users', [AdminController::class, 'index'])->name('users.index');
         Route::get('/create-user', [AdminController::class, 'create'])->name('users.create');
@@ -124,7 +124,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{id}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
         Route::put('/{id}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
         Route::delete('/{id}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
-    });   
+    });
     Route::resource('payment-policies', PaymentPolicyController::class);
     Route::resource('cancellation-policies', CancellationPolicyController::class);
     Route::prefix('cancellation-policy-rules')->group(function () {
@@ -324,7 +324,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/{ratePlanId}/rules/{rule}/edit', [RatePlanRuleController::class, 'edit'])->name('rate-plan-rules.edit');
         Route::put('/{ratePlanId}/rules/{rule}', [RatePlanRuleController::class, 'update'])->name('rate-plan-rules.update');
         Route::delete('/{ratePlanId}/rules/{rule}', [RatePlanRuleController::class, 'destroy'])->name('rate-plan-rules.destroy');
-    });    
+    });
 
      // ================== Payment policies ==================
     Route::resource('payment-policies', PaymentPolicyController::class)->parameters(['payment-policies' => 'policy']);
@@ -362,13 +362,39 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::get('/boat/rooms/{id}', [BoatController::class, 'room_index']);
- 
+
     Route::get('/bookings/trips/events', [BookingController::class, 'getEvents'])->name('booking.events');
 
      // ================== Audit & Logging ==================
     Route::get('/audits', [AuditController::class, 'index'])->name('audit.index');
 
-   
+
+    /* Dashboard */
+    Route::get('/dashboard', [CalendarController::class, 'fleet'])->name('dashboard');
+
+    /* Boat detail */
+    Route::get('/boats/{boat}', [BoatController::class, 'show'])->name('boats.show');
+
+    /* Calendar APIs */
+    Route::prefix('api/calendar')->group(function () {
+        Route::get('/fleet/resources', [CalendarController::class, 'fleetResources']);
+        Route::get('/fleet/events', [CalendarController::class, 'fleetEvents']);
+
+        Route::get('/boat/{boat}/resources', [CalendarController::class, 'boatResources']);
+        Route::get('/boat/{boat}/events', [CalendarController::class, 'boatEvents']);
+
+        Route::post('/event/move', [CalendarController::class, 'moveEvent']);
+    });
+
+    /* Iframe (public / readonly) */
+    Route::get('/embed/fleet', [CalendarController::class, 'fleetIframe']);
+    Route::get('/embed/boat/{boat}', [CalendarController::class, 'boatIframe']);
+
+
+    Route::get('/calendar/fleet/resources', [FleetCalendarController::class, 'resources']);
+Route::get('/calendar/fleet/events', [FleetCalendarController::class, 'events']);
+Route::post('/calendar/event/move', [FleetCalendarController::class, 'move']);
+
 
 });
 
