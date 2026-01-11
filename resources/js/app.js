@@ -12,20 +12,20 @@ window.Alpine = Alpine;
 
 Alpine.start();
 
-// window.initBoatCalendar = function (el, options) {
-//     const calendar = new Calendar(el, {
-//         plugins: [
-//             resourceTimelinePlugin,
-//             multiMonthPlugin,
-//             listPlugin,
-//             interactionPlugin
-//         ],
-//         ...options
-//     })
+window.initBoatCalendar = function (el, options) {
+    const calendar = new Calendar(el, {
+        plugins: [
+            resourceTimelinePlugin,
+            multiMonthPlugin,
+            listPlugin,
+            interactionPlugin
+        ],
+        ...options
+    })
 
-//     calendar.render()
-//     return calendar
-// }
+    calendar.render()
+    return calendar
+}
 
 
 window.initFleetCalendar = function (el, options) {
