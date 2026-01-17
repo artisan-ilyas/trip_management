@@ -40,17 +40,20 @@
         </select>
     </div>
 
-    <div class="col-md-6 mb-3 {{ $booking->source != 'Agent' ? 'd-none' : '' }}" id="agentWrapper">
+    <div class="col-md-6 mb-3" id="agentWrapper">
         <label>Agent</label>
-        <select name="agent_id" class="form-control">
+        <select name="agent_id" id="agentSelect" class="form-control"
+                {{ $booking->source !== 'Agent' ? 'disabled' : '' }}>
             <option value="">-- Select Agent --</option>
             @foreach($agents as $agent)
-                <option value="{{ $agent->id }}" {{ $booking->agent_id == $agent->id ? 'selected' : '' }}>
+                <option value="{{ $agent->id }}"
+                    {{ $booking->agent_id == $agent->id ? 'selected' : '' }}>
                     {{ $agent->first_name }} {{ $agent->last_name }}
                 </option>
             @endforeach
         </select>
     </div>
+
 
     <div class="col-md-6 mb-3">
         <label>Salesperson</label>
@@ -324,8 +327,23 @@ slots.forEach(s => {
 });
 
 const sourceSelect = document.getElementById('sourceSelect');
-const agentWrapper = document.getElementById('agentWrapper');
-sourceSelect.onchange = e => agentWrapper.classList.toggle('d-none', e.target.value !== 'Agent');
+const agentSelect = document.getElementById('agentSelect');
+
+function toggleAgentField() {
+    if (sourceSelect.value === 'Agent') {
+        agentSelect.disabled = false;
+    } else {
+        agentSelect.value = '';
+        agentSelect.disabled = true;
+    }
+}
+
+// Run on page load (important for edit)
+toggleAgentField();
+
+// Run on change
+sourceSelect.addEventListener('change', toggleAgentField);
+
 
 const slotSelect = document.getElementById('slotSelect');
 const inlineSlotWrapper = document.getElementById('inlineSlotWrapper');
