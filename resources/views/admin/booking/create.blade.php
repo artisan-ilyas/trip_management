@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')
 <div class="content-wrapper">
-<div class="container pt-3">
+<div class="container mx-2 pt-3">
 
 <h4>Create Booking</h4>
         @foreach (['success','error'] as $msg)
@@ -19,10 +19,11 @@
 <div class="col-md-6 mb-3">
     <label>Slot</label>
     <select id="slotSelect" name="slot_id" class="form-control">
-        <option value="">-- Select Slot (or create inline) --</option>
+        <option value="1">-- Select Slot (or create inline) --</option>
+        <option value="">Create inline Slot</option>
         @foreach($slots as $slot)
             <option value="{{ $slot->id }}">
-                {{ $slot->boat->name }} | {{ $slot->start_date }} → {{ $slot->end_date }}
+                {{ $slot->boat->name }} | {{ $slot->start_date->format('d-m-Y') }} → {{ $slot->end_date->format('d-m-Y') }}
             </option>
         @endforeach
     </select>
@@ -39,15 +40,16 @@
 </div>
 
 {{-- Agent --}}
-<div class="col-md-6 mb-3 d-none" id="agentWrapper">
+<div class="col-md-6 mb-3" id="agentWrapper">
     <label>Agent</label>
-    <select name="agent_id" class="form-control">
+    <select name="agent_id" id="agentSelect" class="form-control" disabled>
         <option value="">-- Select Agent --</option>
         @foreach($agents as $agent)
             <option value="{{ $agent->id }}">{{ $agent->first_name }} {{ $agent->last_name }}</option>
         @endforeach
     </select>
 </div>
+
 
     <div class="col-md-6 mb-3">
         <label>Salesperson</label>
@@ -66,7 +68,7 @@
     <div class="row">
     <div class="col-md-4 mb-3">
         <label>Boat</label>
-        <select name="boat_id" class="form-control">
+        <select name="boat_id" id="boatSelect" class="form-control">
             <option value="">-- Select Boat --</option>
             @foreach($boats as $boat)
                 <option value="{{ $boat->id }}">{{ $boat->name }}</option>
@@ -283,6 +285,7 @@
 
 <script>
 const slots = @json($slots);
+const boats = @json($boats);
 let roomCaps = {};
 let maxCap = 0;
 
@@ -293,26 +296,71 @@ slots.forEach(s => {
     });
 });
 
-// Toggle Agent field
+// Enable / Disable Agent field
 const sourceSelect = document.getElementById('sourceSelect');
-const agentWrapper = document.getElementById('agentWrapper');
-sourceSelect.onchange = e => agentWrapper.classList.toggle('d-none', e.target.value !== 'Agent');
+const agentSelect = document.getElementById('agentSelect');
+
+function toggleAgentField() {
+    if (sourceSelect.value === 'Agent') {
+        agentSelect.disabled = false;
+    } else {
+        agentSelect.value = '';
+        agentSelect.disabled = true;
+    }
+}
+
+// Init on load
+toggleAgentField();
+
+// On change
+sourceSelect.addEventListener('change', toggleAgentField);
+
 
 // Show/hide inline slot creation
 const slotSelect = document.getElementById('slotSelect');
 const inlineSlotWrapper = document.getElementById('inlineSlotWrapper');
 slotSelect.onchange = function () {
-    const slot = slots.find(s => s.id == this.value);
-    inlineSlotWrapper.classList.toggle('d-none', !!slot);
-
     const roomSelect = document.getElementById('roomSelect');
     roomSelect.innerHTML = '';
-    if (!slot) return;
+
+    const slot = slots.find(s => s.id == this.value);
+
+    // INLINE SLOT
+    if (!slot) {
+        inlineSlotWrapper.classList.remove('d-none');
+        return;
+    }
+
+    // EXISTING SLOT
+    inlineSlotWrapper.classList.add('d-none');
 
     slot.boat.rooms.forEach(r => {
-        roomSelect.innerHTML += `<option value="${r.id}">${r.room_name} (Max ${roomCaps[r.id]})</option>`;
+        roomSelect.innerHTML += `
+            <option value="${r.id}">
+                ${r.room_name} (Max ${r.capacity + r.extra_beds})
+            </option>`;
     });
 };
+
+const boatSelect = document.getElementById('boatSelect');
+
+boatSelect.onchange = function () {
+    const roomSelect = document.getElementById('roomSelect');
+    roomSelect.innerHTML = '';
+
+    const boat = boats.find(b => b.id == this.value);
+    if (!boat || !boat.rooms) return; // 🔒 safety
+
+    boat.rooms.forEach(r => {
+        roomSelect.innerHTML += `
+            <option value="${r.id}">
+                ${r.room_name} (Max ${r.capacity + r.extra_beds})
+            </option>`;
+    });
+};
+
+
+
 
 // Limit guest additions based on room capacity
 const roomSelect = document.getElementById('roomSelect');

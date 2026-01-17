@@ -25,7 +25,7 @@ class BookingController extends Controller
             'paymentPolicies' => PaymentPolicy::all(),
             'cancellationPolicies' => CancellationPolicy::with('rules')->get(),
 
-            'boats' => Boat::withCount('rooms')->get(), // add rooms_count for display
+            'boats' => Boat::with('rooms')->get(), // add rooms_count for display
 
             'regions' => Region::all(),
             'ports' => Port::all(),
