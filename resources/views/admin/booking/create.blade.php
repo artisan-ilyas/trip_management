@@ -210,7 +210,7 @@
     <label>Notes</label>
     <textarea name="notes" class="form-control"></textarea>
 </div>
-
+</div>
 <button class="btn btn-success">Create Booking</button>
 <a href="{{ route('admin.bookings.index') }}" class="btn btn-secondary">Cancel</a>
 </form>

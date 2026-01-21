@@ -220,28 +220,33 @@ public function store(Request $request)
 }
 
 
-   public function edit(Booking $booking)
-    {
-        return view('admin.booking.edit', [
-            'booking' => $booking->load(['rooms', 'guests', 'slot.boat.rooms']),
-            'bookingRoomIds' => $booking->rooms->pluck('id'),
-            'guestRoomMapping' => $booking->guestRoomAssignments()->pluck('room_id', 'guest_id'),
-            'slots' => Slot::with('boat.rooms')->get(),
-            'agents' => Agent::orderBy('first_name')->get(),
-            'guests' => Guest::orderBy('name')->get(),
-            'ratePlans' => RatePlan::with('rules')->get(),
-            'paymentPolicies' => PaymentPolicy::all(),
-            'cancellationPolicies' => CancellationPolicy::with('rules')->get(),
-            'boats' => Boat::withCount('rooms')->get(),
-            'regions' => Region::all(),
-            'currencies' => Currency::all(), // fetch all currencies from DB
-            'ports' => Port::all(),
-            'salespersons' => Salesperson::orderBy('name')->get(),
-            'companies' => auth()->user()->hasRole('admin')
-                ? Company::all()
-                : Company::where('id', auth()->user()->company_id)->get(),
-        ]);
-    }
+public function edit(Booking $booking)
+{
+    return view('admin.booking.edit', [
+        'booking' => $booking->load(['rooms', 'guests', 'slot.boat.rooms']),
+        'bookingRoomIds' => $booking->rooms->pluck('id'),
+        'guestRoomMapping' => $booking->guestRoomAssignments()
+            ->get()
+            ->groupBy('room_id')
+            ->map(fn($g) => $g->pluck('guest_id')->toArray())
+            ->toArray(),
+        'slots' => Slot::with('boat.rooms')->get(),
+        'agents' => Agent::orderBy('first_name')->get(),
+        'guests' => Guest::orderBy('name')->get(),
+        'ratePlans' => RatePlan::with('rules')->get(),
+        'paymentPolicies' => PaymentPolicy::all(),
+        'cancellationPolicies' => CancellationPolicy::with('rules')->get(),
+        'boats' => Boat::withCount('rooms')->get(),
+        'regions' => Region::all(),
+        'currencies' => Currency::all(),
+        'ports' => Port::all(),
+        'salespersons' => Salesperson::orderBy('name')->get(),
+        'companies' => auth()->user()->hasRole('admin')
+            ? Company::all()
+            : Company::where('id', auth()->user()->company_id)->get(),
+    ]);
+}
+
 
     /**
      * Update the booking
