@@ -204,7 +204,7 @@
 </div>
 
 {{-- Company --}}
-@if (Auth::user()->hasRole('admin'))
+{{-- @if (Auth::user()->hasRole('admin'))
     <div class="col-md-6 mb-3">
         <label>Company</label>
         <select name="company_id" class="form-control" required>
@@ -214,7 +214,7 @@
         </select>
     </div>
 @endif
-</div>
+</div> --}}
 
 {{-- Guests --}}
 <div class="mb-3">

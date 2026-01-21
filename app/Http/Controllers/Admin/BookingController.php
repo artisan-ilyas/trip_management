@@ -130,7 +130,7 @@ public function store(Request $request)
     $roomIds = array_values($request->rooms);
 
     $booking = Booking::create([
-        'company_id' => auth()->user()->company_id,
+        // 'company_id' => auth()->user()->company_id,
         'slot_id' => $slot->id,
         'boat_id' => $slot->boat_id,
         'room_id' => $roomIds[0],
@@ -272,7 +272,7 @@ public function store(Request $request)
         |--------------------------------------------------------------------------
         */
         $booking->update([
-            'company_id' => auth()->user()->company_id,
+            // 'company_id' => auth()->user()->company_id,
             'slot_id' => $slot->id,
             'boat_id' => $slot->boat_id,
             'room_id' => $request->rooms[0],
