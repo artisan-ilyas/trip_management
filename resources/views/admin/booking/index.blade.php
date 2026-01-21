@@ -25,6 +25,7 @@
     <th>Room</th>
     <th>Guest</th>
     <th>Dates</th>
+    <th>Price (USD)</th>
     <th>Status</th>
     <th>Actions</th>
 </tr>
@@ -44,6 +45,7 @@
         -
     @endif
 </td>
+    <td>{{ $booking->price_usd }}</td>
     <td>{{ $booking->status }}</td>
     <td>
         <a href="{{ route('admin.bookings.edit', $booking) }}" class="btn btn-sm btn-warning">Edit</a>

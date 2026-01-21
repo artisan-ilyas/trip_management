@@ -143,24 +143,31 @@
         </div>
     </div>
 
-    {{-- Price / Currency --}}
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label>Price</label>
-            <input type="number" name="price" step="0.01" class="form-control" value="{{ $booking->price }}" required>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label>Currency</label>
-                <select name="currency" class="form-control" required>
-                    @foreach($currencies as $curr)
-                        <option value="{{ $curr->id }}" {{ $booking->currency == $curr->id ? 'selected' : '' }}>
-                            {{ $curr->symbol }} - {{ $curr->name }}
-                        </option>
-                    @endforeach
-                </select>
-
-        </div>
+   {{-- Price / Currency --}}
+<div class="row">
+    <div class="col-md-6 mb-3">
+        <label>Price (Selected Currency)</label>
+        <input type="number" id="price" name="price" step="0.01" class="form-control"
+               value="{{ old('price', $booking->price) }}" required>
     </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Currency</label>
+        <select id="currency" name="currency" class="form-control" required>
+            @foreach($currencies as $curr)
+                <option value="{{ $curr->id }}" data-rate="{{ $curr->rate }}"
+                    {{ $booking->currency == $curr->id ? 'selected' : '' }}>
+                    {{ $curr->symbol }} - {{ $curr->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="col-md-6 mb-3">
+        <label>Price in USD</label>
+        <input type="number" id="price_usd" name="price_usd" class="form-control" value="{{ $booking->price_usd }}" readonly>
+    </div>
+</div>
 
     {{-- Rooms --}}
     <div class="mb-3">
@@ -523,7 +530,21 @@ guests.forEach(g => {
             }
         });
     });
+   const priceInput = document.getElementById('price');
+    const currencySelect = document.getElementById('currency');
+    const priceUsdInput = document.getElementById('price_usd');
 
+    function updateUSD() {
+        const rate = parseFloat(currencySelect.selectedOptions[0].dataset.rate);
+        const price = parseFloat(priceInput.value) || 0;
+        priceUsdInput.value = (price * rate).toFixed(2);
+    }
+
+    priceInput.addEventListener('input', updateUSD);
+    currencySelect.addEventListener('change', updateUSD);
+
+    // Initialize on page load with existing booking data
+    updateUSD();
 });
 </script>
 

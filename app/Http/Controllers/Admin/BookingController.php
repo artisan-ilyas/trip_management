@@ -42,24 +42,30 @@ class BookingController extends Controller
 
 public function store(Request $request)
 {
-    // dd($request->rooms);
+    // dd($request->all());
+
+    /*
+    |--------------------------------------------------------------------------
+    | VALIDATION
+    |--------------------------------------------------------------------------
+    */
     $validator = Validator::make($request->all(), [
         'source' => 'required|in:Direct,Agent',
         'agent_id' => 'nullable|required_if:source,Agent',
-        // 'rooms' => 'required|array',
-        'guests' => 'required|array',
-        'guest_rooms' => 'required|array',
+        'guest_rooms' => 'required|array|min:1',
+        'price' => 'required|numeric',
+        'currency' => 'required',
+        'salesperson_id' => 'required',
+        'status' => 'required',
     ]);
 
     if ($validator->fails()) {
-        return back()
-            ->withErrors($validator)
-            ->withInput();
+        return back()->withErrors($validator)->withInput();
     }
 
     /*
     |--------------------------------------------------------------------------
-    | STEP 1: Resolve Slot
+    | STEP 1: RESOLVE SLOT
     |--------------------------------------------------------------------------
     */
     if ($request->slot_id) {
@@ -100,19 +106,29 @@ public function store(Request $request)
 
     /*
     |--------------------------------------------------------------------------
-    | STEP 2: Capacity Validation (Per Room)
+    | STEP 2: ROOM CAPACITY VALIDATION
     |--------------------------------------------------------------------------
     */
-    $roomCounts = [];
+    $roomGuestCounts = [];
 
-    foreach ($request->guest_rooms as $guestId => $roomId) {
-        $roomCounts[$roomId] = ($roomCounts[$roomId] ?? 0) + 1;
+    foreach ($request->guest_rooms as $roomId => $guestIds) {
+        $guestIds = is_array($guestIds) ? $guestIds : [$guestIds];
+        $roomGuestCounts[$roomId] = count($guestIds);
     }
 
-    $rooms = Room::whereIn('id', array_keys($roomCounts))->get()->keyBy('id');
+    $rooms = Room::whereIn('id', array_keys($roomGuestCounts))
+        ->get()
+        ->keyBy('id');
 
-    foreach ($roomCounts as $roomId => $count) {
+    foreach ($roomGuestCounts as $roomId => $count) {
+        if (!isset($rooms[$roomId])) {
+            return back()->withErrors([
+                'guest_rooms' => 'Invalid room selected'
+            ])->withInput();
+        }
+
         $capacity = $rooms[$roomId]->capacity + $rooms[$roomId]->extra_beds;
+
         if ($count > $capacity) {
             return back()->withErrors([
                 'guest_rooms' => "Room {$rooms[$roomId]->room_name} capacity exceeded"
@@ -122,20 +138,41 @@ public function store(Request $request)
 
     /*
     |--------------------------------------------------------------------------
-    | STEP 3: Create Booking
+    | STEP 3: COLLECT ALL GUEST IDS
     |--------------------------------------------------------------------------
     */
-    $leadGuest = Guest::find($request->guests[0]);
+    $guestIds = collect($request->guest_rooms)
+        ->flatten()
+        ->unique()
+        ->values()
+        ->toArray();
 
-    $roomIds = array_values($request->rooms);
+    if (empty($guestIds)) {
+        return back()->withErrors([
+            'guest_rooms' => 'At least one guest is required'
+        ])->withInput();
+    }
 
+    $leadGuest = Guest::find($guestIds[0]);
+
+    if (!$leadGuest) {
+        return back()->withErrors([
+            'guest_rooms' => 'Invalid guest selected'
+        ])->withInput();
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | STEP 4: CREATE BOOKING
+    |--------------------------------------------------------------------------
+    */
     $booking = Booking::create([
         // 'company_id' => auth()->user()->company_id,
         'slot_id' => $slot->id,
         'boat_id' => $slot->boat_id,
-        'room_id' => $roomIds[0],
+        'room_id' => array_key_first($request->guest_rooms), // primary room
         'guest_name' => $leadGuest->name,
-        'guest_count' => count($request->guests),
+        'guest_count' => count($guestIds),
         'source' => $request->source,
         'agent_id' => $request->agent_id,
         'rate_plan_id' => $request->rate_plan_id,
@@ -146,28 +183,42 @@ public function store(Request $request)
         'price' => $request->price,
         'currency' => $request->currency,
         'salesperson_id' => $request->salesperson_id,
+        'price_usd' => $request->price_usd,
     ]);
 
     /*
     |--------------------------------------------------------------------------
-    | STEP 4: Attach Relations
+    | STEP 5: ATTACH ROOMS & GUESTS
     |--------------------------------------------------------------------------
     */
-    $booking->rooms()->sync($request->rooms);
-    $booking->guests()->sync($request->guests);
+    $booking->rooms()->sync(array_keys($request->guest_rooms));
+    $booking->guests()->sync($guestIds);
 
-    foreach ($request->guest_rooms as $guestId => $roomId) {
-        BookingGuestRoom::create([
-            'booking_id' => $booking->id,
-            'guest_id' => $guestId,
-            'room_id' => $roomId,
-        ]);
+    /*
+    |--------------------------------------------------------------------------
+    | STEP 6: STORE GUEST → ROOM MAPPING
+    |--------------------------------------------------------------------------
+    */
+    foreach ($request->guest_rooms as $roomId => $guestIds) {
+        foreach ((array) $guestIds as $guestId) {
+            BookingGuestRoom::create([
+                'booking_id' => $booking->id,
+                'room_id' => $roomId,
+                'guest_id' => $guestId,
+            ]);
+        }
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | DONE
+    |--------------------------------------------------------------------------
+    */
     return redirect()
         ->route('admin.bookings.index')
         ->with('success', 'Booking created successfully');
 }
+
 
    public function edit(Booking $booking)
     {
@@ -271,11 +322,14 @@ public function store(Request $request)
         | STEP 3: Update Booking
         |--------------------------------------------------------------------------
         */
+
+        $roomIds = array_values($request->rooms);
+
         $booking->update([
             // 'company_id' => auth()->user()->company_id,
             'slot_id' => $slot->id,
             'boat_id' => $slot->boat_id,
-            'room_id' => $request->rooms[0],
+            'room_id' => $roomIds[0],
             'guest_name' => $leadGuest?->name,
             'guest_count' => $guestCount,
             'source' => $request->source,
@@ -288,6 +342,7 @@ public function store(Request $request)
             'price' => $request->price,
             'currency' => $request->currency,
             'salesperson_id' => $request->salesperson_id,
+            'price_usd' => $request->price_usd,
         ]);
 
         /*
