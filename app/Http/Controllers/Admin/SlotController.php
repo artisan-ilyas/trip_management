@@ -48,7 +48,7 @@ class SlotController extends Controller
         $status = $request->status;
         if (in_array($request->slot_type,['Maintenance','Docking'])) $status='Blocked';
 
-        if(in_array($status,['Blocked','On Hold']) && empty($request->notes))
+        if(in_array($status,['Blocked','On-Hold']) && empty($request->notes))
             return back()->withErrors(['notes'=>'Notes are required for this status.'])->withInput();
 
         Slot::create([
@@ -88,7 +88,7 @@ class SlotController extends Controller
         $status = $request->status;
         if (in_array($request->slot_type,['Maintenance','Docking'])) $status='Blocked';
 
-        if(in_array($status,['Blocked','On Hold']) && empty($request->notes))
+        if(in_array($status,['Blocked','On-Hold']) && empty($request->notes))
             return back()->withErrors(['notes'=>'Notes are required for this status.'])->withInput();
 
         $slot->update([

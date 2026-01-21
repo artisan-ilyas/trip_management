@@ -43,7 +43,7 @@ class Booking extends Model
         'price',
         'currency',
         'salesperson_id',
-
+        'price_usd',
     ];
 
 

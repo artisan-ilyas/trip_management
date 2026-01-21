@@ -4,7 +4,15 @@
 <div class="container pt-3">
 
 <h4>Create Slot</h4>
-
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <form method="POST" action="{{ route('admin.slots.store') }}">
 @csrf
 
@@ -32,7 +40,7 @@
     <div class="col-md-6">
         <label>Status</label>
         <select name="status" class="form-control" required>
-            @foreach(['Available','On Hold','Blocked'] as $status)
+            @foreach(['Available','On-Hold','Blocked'] as $status)
                 <option value="{{ $status }}" {{ old('status')==$status?'selected':'' }}>{{ $status }}</option>
             @endforeach
         </select>

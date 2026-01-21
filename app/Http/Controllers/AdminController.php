@@ -63,50 +63,70 @@ class AdminController extends Controller
         return view('admin.users.create', compact('roles', 'companies'));
     }
 
-    public function store(Request $request)
-    {
-        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+public function store(Request $request)
+{
+    $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
 
-        $user = User::create([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'password'   => Hash::make($request->password),
-            'company_id' => $companyId,
-        ]);
+    $request->validate([
+        'first_name' => 'required|string|max:100',
+        'last_name'  => 'required|string|max:100',
+        'email'      => 'required|email|unique:users,email',
+        'password'   => 'required|string|min:8',
+        'role'       => 'required|exists:roles,id',
+        'company_id' => $this->tenant ? 'nullable' : 'required|exists:companies,id',
+    ]);
 
-        $role = Role::findOrFail($request->role);
-        $user->assignRole($role->name);
+    $user = User::create([
+        'first_name' => $request->first_name,
+        'last_name'  => $request->last_name,
+        'email'      => $request->email,
+        'password'   => Hash::make($request->password),
+        'company_id' => $companyId,
+    ]);
 
-        return redirect()->route('users.create')->with('success', 'User created successfully.');
+    $role = Role::findOrFail($request->role);
+    $user->assignRole($role->name);
+
+    return redirect()->route('users.create')->with('success', 'User created successfully.');
+}
+
+
+public function update(Request $request, $id)
+{
+    $user = User::findOrFail($id);
+
+    // Tenant security check
+    if ($this->tenant && $user->company_id != $this->tenant->id) {
+        abort(403, 'Unauthorized');
     }
 
-    public function update(Request $request, $id)
-    {
-        $user = User::findOrFail($id);
+    $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
 
-        // Only allow update if tenant matches (or admin)
-        if ($this->tenant && $user->company_id != $this->tenant->id) {
-            abort(403, 'Unauthorized');
-        }
+    $request->validate([
+        'first_name' => 'required|string|max:100',
+        'last_name'  => 'required|string|max:100',
+        'email'      => 'required|email|unique:users,email,' . $user->id,
+        'password'   => 'nullable|string|min:8',
+        'role'       => 'required|exists:roles,id',
+        'company_id' => $this->tenant ? 'nullable' : 'required|exists:companies,id',
+    ]);
 
-        $companyId = $this->tenant ? $this->tenant->id : $request->company_id;
+    $user->update([
+        'first_name' => $request->first_name,
+        'last_name'  => $request->last_name,
+        'email'      => $request->email,
+        'company_id' => $companyId,
+        'password'   => $request->filled('password')
+                            ? Hash::make($request->password)
+                            : $user->password,
+    ]);
 
-        $user->update([
-            'first_name' => $request->first_name,
-            'last_name'  => $request->last_name,
-            'email'      => $request->email,
-            'company_id' => $companyId,
-            'password'   => $request->filled('password') 
-                                ? Hash::make($request->password) 
-                                : $user->password,
-        ]);
+    $role = Role::findOrFail($request->role);
+    $user->syncRoles([$role->name]);
 
-        $role = Role::findOrFail($request->role);
-        $user->syncRoles([$role->name]);
+    return redirect()->route('users.index')->with('success', 'User updated successfully.');
+}
 
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
-    }
 
     public function destroy($id)
     {

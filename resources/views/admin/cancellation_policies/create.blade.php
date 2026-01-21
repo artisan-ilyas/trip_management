@@ -4,7 +4,15 @@
 <div class="container pt-3">
 
 <h2>Create Cancellation Policy</h2>
-
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <form action="{{ route('cancellation-policies.store') }}" method="POST">
 @csrf
 <div class="row mb-3">

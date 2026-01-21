@@ -3,7 +3,15 @@
 <div class="content-wrapper">
 <div class="container pt-3">
 <h2>Add Rule for {{ $ratePlan->name }}</h2>
-
+@if ($errors->any())
+    <div class="alert alert-danger">
+        <ul class="mb-0">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 <form action="{{ route('rate-plan-rules.store', $ratePlan->id) }}" method="POST">
 @csrf
 <div class="row mb-3">
