@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Slot extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'slot_type',
         'status',

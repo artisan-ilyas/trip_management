@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Guest extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'name', 'gender', 'trip_id', 'email', 'dob', 'passport', 'nationality', 'cabin', 'surfLevel', 'boardDetails',
         'arrivalFlightDate', 'arrivalFlightNumber', 'arrivalAirport', 'arrivalTime', 'hotelPickup',

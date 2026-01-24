@@ -172,7 +172,6 @@
 <button type="button" id="addGuestBtn" class="btn btn-sm btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#guestModal">
     + Add Guest
 </button>
-
 {{-- Rate Plan --}}
 <div class="row">
     <div class="col-md-6 mb-3">
@@ -391,7 +390,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initial state
     roomMessage.style.display='block';
-    addGuestBtn.style.display='none';
+    // addGuestBtn.style.display='none';
 });
 </script>
 
