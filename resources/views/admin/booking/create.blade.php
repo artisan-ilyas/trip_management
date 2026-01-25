@@ -31,10 +31,17 @@
 <div class="col-md-6 mb-3">
     <label>Slot</label>
     <select id="slotSelect" name="slot_id" class="form-control">
-        <option value="">-- Select Slot (or create inline) --</option>
+        <option value="1">-- Select Slot (or create inline) --</option>
         @foreach($slots as $slot)
-            <option value="{{ $slot->id }}">
-                {{ $slot->boat->name }} | {{ $slot->start_date->format('d-m-Y') }} → {{ $slot->end_date->format('d-m-Y') }}
+            <option value="{{ $slot['id'] }}" data-json='@json($slot)'>
+                @if(!empty($slot['boats']) && count($slot['boats']) > 1)
+                    {{ implode(', ', array_map(fn($b) => $b['name'], $slot['boats'])) }}
+                @elseif(!empty($slot['boat']))
+                    {{ $slot['boat']['name'] }}
+                @else
+                    -
+                @endif
+                | {{ \Carbon\Carbon::parse($slot['start_date'])->format('d-m-Y') }} → {{ \Carbon\Carbon::parse($slot['end_date'])->format('d-m-Y') }}
             </option>
         @endforeach
     </select>
@@ -88,66 +95,37 @@
 <div id="inlineSlotWrapper" class="border p-3 mb-3 d-none">
     <h5>Inline Slot Creation</h5>
     <div class="row">
-    <div class="col-md-4 mb-3">
-        <label>Boat</label>
-        <select name="boat_id" id="boatSelect" class="form-control">
-            <option value="">-- Select Boat --</option>
-            @foreach($boats as $boat)
-                <option value="{{ $boat->id }}">{{ $boat->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-md-4 mb-3">
-        <label>Start Date</label>
-        <input type="date" name="start_date" class="form-control">
-    </div>
-    <div class="col-md-4 mb-3">
-        <label>End Date</label>
-        <input type="date" name="end_date" class="form-control">
-    </div>
-    </div>
-    <div class="row">
-    <div class="col-md-4 mb-3">
-        <label>Region</label>
-        <select name="region_id" class="form-control">
-            <option value="">-- Select Region --</option>
-            @foreach($regions as $region)
-                <option value="{{ $region->id }}">{{ $region->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-md-4 mb-3">
-        <label>Embarkation Port</label>
-        <select name="embarkation_port_id" class="form-control">
-            <option value="">-- Select Port --</option>
-            @foreach($ports as $port)
-                <option value="{{ $port->id }}">{{ $port->name }}</option>
-            @endforeach
-        </select>
-    </div>
-    <div class="col-md-4 mb-3">
-        <label>Disembarkation Port</label>
-        <select name="disembarkation_port_id" class="form-control">
-            <option value="">-- Select Port --</option>
-            @foreach($ports as $port)
-                <option value="{{ $port->id }}">{{ $port->name }}</option>
-            @endforeach
-        </select>
-    </div>
+        <div class="col-md-4 mb-3">
+            <label>Boat</label>
+            <select name="boat_id" id="inlineBoatSelect" class="form-control">
+                <option value="">-- Select Boat --</option>
+                @foreach($boats as $boat)
+                    <option value="{{ $boat->id }}">{{ $boat->name }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-md-4 mb-3">
+            <label>Start Date</label>
+            <input type="date" name="start_date" id="inlineStartDate" class="form-control">
+        </div>
+        <div class="col-md-4 mb-3">
+            <label>End Date</label>
+            <input type="date" name="end_date" id="inlineEndDate" class="form-control" readonly>
+        </div>
     </div>
 </div>
 
-{{-- Price / Currency / Salesperson --}}
+{{-- Price / Currency --}}
 <div class="row">
     <div class="col-md-6 mb-3">
         <label>Price (Selected Currency)</label>
-        <input type="number" id="price" name="price" step="0.01" class="form-control" required value="{{ old('price', $booking->price ?? '') }}">
+        <input type="number" id="price" name="price" step="0.01" class="form-control" required value="{{ old('price') }}">
     </div>
     <div class="col-md-6 mb-3">
         <label>Currency</label>
         <select id="currency" name="currency" class="form-control" required>
             @foreach($currencies as $curr)
-                <option value="{{ $curr->id }}" data-rate="{{ $curr->rate }}" {{ isset($booking) && $booking->currency_id == $curr->id ? 'selected' : '' }}>
+                <option value="{{ $curr->id }}" data-rate="{{ $curr->rate }}" {{ old('currency')==$curr->id?'selected':'' }}>
                     {{ $curr->symbol }} - {{ $curr->name }}
                 </option>
             @endforeach
@@ -173,37 +151,33 @@
     + Add Guest
 </button>
 
-{{-- Rate Plan --}}
+{{-- Rate / Payment / Cancellation --}}
 <div class="row">
     <div class="col-md-6 mb-3">
         <label>Rate Plan</label>
         <select name="rate_plan_id" class="form-control" required>
             @foreach($ratePlans as $plan)
                 <option value="{{ $plan->id }}">{{ $plan->name }}</option>
-        @endforeach
-    </select>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label>Payment Policy</label>
+        <select name="payment_policy_id" class="form-control" required>
+            @foreach($paymentPolicies as $policy)
+                <option value="{{ $policy->id }}">{{ $policy->name }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div class="col-md-6 mb-3">
+        <label>Cancellation Policy</label>
+        <select name="cancellation_policy_id" class="form-control" required>
+            @foreach($cancellationPolicies as $policy)
+                <option value="{{ $policy->id }}">{{ $policy->name }}</option>
+            @endforeach
+        </select>
+    </div>
 </div>
-
-{{-- Payment Policy --}}
-<div class="col-md-6 mb-3">
-    <label>Payment Policy</label>
-    <select name="payment_policy_id" class="form-control" required>
-        @foreach($paymentPolicies as $policy)
-            <option value="{{ $policy->id }}">{{ $policy->name }}</option>
-        @endforeach
-    </select>
-</div>
-
-{{-- Cancellation Policy --}}
-<div class="col-md-6 mb-3">
-    <label>Cancellation Policy</label>
-    <select name="cancellation_policy_id" class="form-control" required>
-        @foreach($cancellationPolicies as $policy)
-            <option value="{{ $policy->id }}">{{ $policy->name }}</option>
-        @endforeach
-    </select>
-</div>
-
 
 {{-- Notes --}}
 <div class="mb-3">
@@ -217,19 +191,19 @@
 </div>
 </div>
 
-{{-- Add Guest Modal --}}
+{{-- Guest Modal --}}
 <div class="modal fade" id="guestModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
-      <form id="guestForm">
-        @csrf
+      <form id="guestForm">@csrf
         <div class="modal-header">
           <h5 class="modal-title">Add Guest</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
           <div class="mb-3"><label>Name</label><input type="text" name="name" class="form-control" required></div>
-          <div class="mb-3"><label>Gender</label><select name="gender" class="form-control" required><option value="">-- Select Gender --</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
+          <div class="mb-3"><label>Gender</label><select name="gender" class="form-control" required>
+            <option value="">-- Select Gender --</option><option value="Male">Male</option><option value="Female">Female</option></select></div>
           <div class="mb-3"><label>Date of Birth</label><input type="date" name="dob" class="form-control" required></div>
           <div class="mb-3"><label>Email</label><input type="email" name="email" class="form-control"></div>
           <div class="mb-3"><label>Passport</label><input type="text" name="passport" class="form-control"></div>
@@ -247,136 +221,180 @@
 <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function(){
     const slots = @json($slots);
     const boats = @json($boats);
     const guests = @json($guests);
 
-    const sourceSelect      = document.getElementById('sourceSelect');
-    const agentSelect       = document.getElementById('agentSelect');
-    const slotSelect        = document.getElementById('slotSelect');
-    const boatSelect        = document.getElementById('boatSelect');
+    const slotSelect = document.getElementById('slotSelect');
+    const roomWrapper = document.getElementById('roomWrapper');
+    const roomMessage = document.getElementById('roomMessage');
+    const agentSelect = document.getElementById('agentSelect');
+    const sourceSelect = document.getElementById('sourceSelect');
     const inlineSlotWrapper = document.getElementById('inlineSlotWrapper');
-    const roomWrapper       = document.getElementById('roomWrapper');
-    const roomMessage       = document.getElementById('roomMessage');
 
-    // Toggle agent field
-    function toggleAgentField() {
+    // Enable/Disable Agent select based on Source
+    function toggleAgent(){
         agentSelect.disabled = sourceSelect.value !== 'Agent';
-        if (agentSelect.disabled) agentSelect.value = '';
+        if(agentSelect.disabled) agentSelect.value = '';
     }
-    toggleAgentField();
-    sourceSelect.addEventListener('change', toggleAgentField);
+    toggleAgent();
+    sourceSelect.addEventListener('change', toggleAgent);
 
-    // Render rooms
-    function renderRooms(rooms) {
-        roomWrapper.innerHTML = '';
-        if(!rooms || !rooms.length){ roomMessage.style.display = 'block'; return; }
-        roomMessage.style.display = 'none';
+    // Keep Choices instances for all room selects
+    const choicesInstances = [];
 
-        rooms.forEach(room => {
-            const cap = parseInt(room.capacity ?? 0) + parseInt(room.extra_beds ?? 0);
+    // Render rooms grouped by boat
+ function renderRoomsByBoat(slot){
+    roomWrapper.innerHTML = '';
+    let roomsExist = false;
+
+    // Check if Private Charter
+    const optionalRooms = slot.slot_type === 'Private Charter';
+
+    function addRooms(boat){
+        if(!boat.rooms || !boat.rooms.length) return;
+        roomsExist = true;
+
+        const boatHeader = document.createElement('div');
+        boatHeader.className = 'col-12 mb-2';
+        boatHeader.innerHTML = `<strong>Boat: ${boat.name}</strong>`;
+        roomWrapper.appendChild(boatHeader);
+
+        boat.rooms.forEach(room=>{
+            const cap = parseInt(room.capacity||0)+parseInt(room.extra_beds||0);
             const div = document.createElement('div');
-            div.className = 'col-md-4';
-            div.innerHTML = `
+            div.className='col-md-4';
+            div.innerHTML=`
                 <label class="card p-2 h-100">
                     <strong>${room.room_name}</strong><br>
                     <small class="text-muted">Max ${cap}</small>
-                    <select multiple
-                            class="form-control room-guests mt-2"
-                            name="guest_rooms[${room.id}][]"
-                            data-room-id="${room.id}"
-                            data-cap="${cap}">
-                    </select>
+                    <select multiple class="form-control room-guests mt-2"
+                        name="guest_rooms[${room.id}][]"
+                        data-cap="${cap}"
+                        ${optionalRooms ? '' : 'required'}></select>
                     <div class="assigned-guests mt-1 text-muted"></div>
                     <div class="room-full text-danger mt-1" style="display:none;">Room is full!</div>
-                </label>`;
+                </label>
+            `;
             roomWrapper.appendChild(div);
 
             const select = div.querySelector('select.room-guests');
             const fullMsg = div.querySelector('.room-full');
 
-            // Add guest options
-            guests.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g.id;
-                opt.text = g.name;
+            // Add guests
+            guests.forEach(g=>{
+                const opt=document.createElement('option');
+                opt.value=g.id; opt.text=g.name;
                 select.add(opt);
             });
 
-            // Initialize Choices.js
-            const choices = new Choices(select, {
-                removeItemButton: true,
-                searchEnabled: true,
-                shouldSort: false,
-                placeholder: true,
-                placeholderValue: 'Select guests for this room'
+            const choices = new Choices(select,{
+                removeItemButton:true,
+                searchEnabled:true,
+                shouldSort:false,
+                placeholder:true,
+                placeholderValue:'Select guests'
             });
 
-            // Update room state function
-            function updateRoomState() {
+            function updateRoomState(){
                 const selectedCount = select.selectedOptions.length;
-                div.querySelector('.assigned-guests').textContent = Array.from(select.selectedOptions).map(o => o.text).join(', ');
-
-                if(selectedCount >= cap) {
-                    // Room full → hide dropdown
-                    select.closest('label').querySelector('.choices').style.display = 'none';
-                    fullMsg.style.display = 'block';
+                div.querySelector('.assigned-guests').textContent = Array.from(select.selectedOptions).map(o=>o.text).join(', ');
+                if(selectedCount >= cap){
+                    select.closest('label').querySelector('.choices').style.display='none';
+                    fullMsg.style.display='block';
                 } else {
-                    // Room has space → show dropdown
-                    select.closest('label').querySelector('.choices').style.display = 'block';
-                    fullMsg.style.display = 'none';
+                    select.closest('label').querySelector('.choices').style.display='block';
+                    fullMsg.style.display='none';
                 }
             }
 
-            // Trigger when selection changes
-            select.addEventListener('change', updateRoomState);
-            select.addEventListener('removeItem', updateRoomState);
+            select.addEventListener('change',updateRoomState);
+            select.addEventListener('removeItem',updateRoomState);
         });
     }
 
-    // Slot change
-    slotSelect.addEventListener('change', function() {
-        const slot = slots.find(s => s.id == this.value);
-        if(!slot){ inlineSlotWrapper.classList.remove('d-none'); roomWrapper.innerHTML=''; roomMessage.style.display='block'; return; }
+    // Old single boat
+    if(slot.boat_id && slot.boat) addRooms(slot.boat);
+
+    // Multiple boats
+    if(slot.boats && slot.boats.length){
+        slot.boats.forEach(addRooms);
+    }
+
+    roomMessage.style.display = roomsExist ? 'none' : 'block';
+}
+
+
+    // On slot change
+    slotSelect.addEventListener('change', function(){
+        const slot = slots.find(s=>s.id==this.value);
+        if(!slot){
+            inlineSlotWrapper.classList.remove('d-none');
+            roomWrapper.innerHTML='';
+            roomMessage.style.display='block';
+            return;
+        }
         inlineSlotWrapper.classList.add('d-none');
-        if(slot.boat && slot.boat.rooms) renderRooms(slot.boat.rooms);
+        renderRoomsByBoat(slot);
     });
 
-    // Boat change
-    boatSelect.addEventListener('change', function() {
-        const boat = boats.find(b => b.id == this.value);
-        if(!boat || !boat.rooms){ roomWrapper.innerHTML=''; roomMessage.style.display='block'; return; }
-        renderRooms(boat.rooms);
-    });
-
-    // Add guest via modal
+    // Add Guest via modal
     $('#guestForm').on('submit', function(e){
         e.preventDefault();
         const form = $(this);
+
         $.ajax({
             url: '{{ route("admin.guests.store") }}',
             method: 'POST',
             data: form.serialize(),
             success: function(guest){
                 guests.push(guest);
-                document.querySelectorAll('.room-guests').forEach(sel => {
-                    const newOption = document.createElement('option');
-                    newOption.value = guest.id; newOption.text = guest.name;
-                    sel.add(newOption.cloneNode(true));
+
+                // Add new guest to all Choices selects dynamically
+                choicesInstances.forEach(instance=>{
+                    instance.setChoices([{
+                        value: guest.id,
+                        label: guest.name,
+                        selected: false,
+                        disabled: false
+                    }], 'value', 'label', false);
                 });
-                $('#guestModal').modal('hide'); form[0].reset();
+
+                $('#guestModal').modal('hide');
+                form[0].reset();
+
+                // SweetAlert notification
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Guest Added',
+                    text: `${guest.name} has been added successfully.`,
+                    timer: 2000,
+                    showConfirmButton: false
+                });
             },
-            error: function(){ alert('Failed to create guest'); }
+            error: function(xhr){
+                let msg = 'Failed to create guest';
+                if(xhr.responseJSON && xhr.responseJSON.errors){
+                    msg = Object.values(xhr.responseJSON.errors).flat().join('\n');
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: msg
+                });
+            }
         });
     });
 
-     // Price USD
+    roomMessage.style.display='block';
+
+    // Price USD
     const priceInput = document.getElementById('price');
     const currencySelect = document.getElementById('currency');
     const priceUsdInput = document.getElementById('price_usd');
@@ -388,13 +406,9 @@ document.addEventListener('DOMContentLoaded', function () {
     priceInput.addEventListener('input', updateUSD);
     currencySelect.addEventListener('change', updateUSD);
     updateUSD();
-
-    // Initial state
-    roomMessage.style.display='block';
-    addGuestBtn.style.display='none';
 });
+
+
+
 </script>
-
-
-
 @endsection

@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Boat extends Model
 {
+    use Auditable;
+
       protected $fillable = [
         'name',
         'description',
@@ -39,8 +42,9 @@ class Boat extends Model
 
     public function bookings()
     {
-        return $this->hasMany(Booking::class);
+        return $this->belongsToMany(Booking::class, 'boat_booking');
     }
+
 
     public function booking()
     {

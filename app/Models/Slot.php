@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Slot extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'slot_type',
         'status',
@@ -31,6 +34,12 @@ class Slot extends Model
     {
         return $this->belongsTo(Boat::class);
     }
+
+    public function boats()
+    {
+        return $this->belongsToMany(Boat::class, 'slot_boat');
+    }
+
 
     public function template()
     {

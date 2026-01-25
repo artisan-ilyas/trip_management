@@ -36,7 +36,23 @@
     <td>{{ $slot->template ? $slot->template->product_name : '-' }}</td>
     <td>{{ $slot->slot_type }}</td>
     <td>{{ $slot->status }}</td>
-    <td>{{ $slot->boat->name ?? '-' }}</td>
+    <td>
+        {{-- Primary boat --}}
+        @if($slot->boat_id && $slot->boat)
+            {{ $slot->boat->name }}
+        @endif
+
+        {{-- Other boats from pivot --}}
+        @if($slot->boats->count())
+                {{ $slot->boats->pluck('name')->join(', ') }}
+
+        @endif
+        {{-- Fallback --}}
+        @if(!$slot->boat_id && !$slot->boats->count())
+            -
+        @endif
+    </td>
+
     <td>{{ $slot->region->name ?? '-' }}</td>
     <td>{{ $slot->departurePort->name ?? '-' }} → {{ $slot->arrivalPort->name ?? '-' }}</td>
     <td>{{ $slot->start_date->format('Y-m-d') }} → {{ $slot->end_date->format('Y-m-d') }}</td>

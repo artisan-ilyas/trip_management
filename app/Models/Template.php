@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Template extends Model
 {
+    use Auditable;
+
     protected $fillable = [
         'product_name', 'product_type', 'region_id', 'vessels_allowed',
         'duration_days', 'duration_nights', 'departure_ports', 'arrival_ports',

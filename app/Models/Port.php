@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\Auditable;
 use Illuminate\Database\Eloquent\Model;
 
 class Port extends Model
 {
+    use Auditable;
+
     protected $fillable = ['name'];
 
     public function departureSlots()
