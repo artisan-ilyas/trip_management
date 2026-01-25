@@ -35,6 +35,12 @@ class Slot extends Model
         return $this->belongsTo(Boat::class);
     }
 
+    public function boats()
+    {
+        return $this->belongsToMany(Boat::class, 'slot_boat');
+    }
+
+
     public function template()
     {
         return $this->belongsTo(Template::class, 'created_from_template_id');

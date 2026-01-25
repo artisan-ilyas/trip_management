@@ -74,6 +74,11 @@ class Booking extends Model
         return $this->belongsTo(Boat::class);
     }
 
+    public function boats()
+    {
+        return $this->belongsToMany(Boat::class);
+    }
+
     public function slot()
     {
         return $this->belongsTo(Slot::class);

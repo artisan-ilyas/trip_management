@@ -37,7 +37,8 @@ class SlotController extends Controller
     {
         $request->validate([
             'slot_type' => 'required',
-            'boat_id' => 'required|exists:boats,id',
+            'boats_allowed' => 'required|array|min:1',
+            'boats_allowed.*' => 'exists:boats,id',
             'region_id' => 'required|exists:regions,id',
             'departure_port_id' => 'required|exists:ports,id',
             'arrival_port_id' => 'required|exists:ports,id',
@@ -51,23 +52,26 @@ class SlotController extends Controller
         if(in_array($status,['Blocked','On-Hold']) && empty($request->notes))
             return back()->withErrors(['notes'=>'Notes are required for this status.'])->withInput();
 
-        Slot::create([
+        // Create Slot
+        $slot = Slot::create([
             'slot_type' => $request->slot_type,
             'status' => $status,
-            'boat_id' => $request->boat_id,
             'region_id' => $request->region_id,
             'departure_port_id' => $request->departure_port_id,
             'arrival_port_id' => $request->arrival_port_id,
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
-            'available_rooms' => $request->rooms ?? [],
             'notes' => $request->notes,
             'created_from_template_id' => $request->template_id ?? null,
             'company_id' => $request->company_id,
         ]);
 
+        // Attach selected vessels
+        $slot->boats()->sync($request->boats_allowed); // assuming Slot has many-to-many with Boat
+
         return redirect()->route('admin.slots.index')->with('success','Slot created successfully.');
     }
+
 
     public function edit(Slot $slot)
     {

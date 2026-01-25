@@ -4,6 +4,7 @@
 <div class="container pt-3">
 
 <h4>Create Template</h4>
+
 @if ($errors->any())
     <div class="alert alert-danger">
         <ul class="mb-0">
@@ -13,6 +14,7 @@
         </ul>
     </div>
 @endif
+
 <form method="POST" action="{{ route('admin.templates.store') }}">
 @csrf
 
@@ -42,7 +44,7 @@
     </div>
     <div class="col-md-8">
         <label>Vessels Allowed</label>
-        <select name="vessels_allowed[]" class="form-control" multiple required>
+        <select name="vessels_allowed[]" id="vesselsAllowed" class="form-control" multiple required>
             @foreach($boats as $boat)
                 <option value="{{ $boat->id }}">{{ $boat->name }}</option>
             @endforeach
@@ -81,25 +83,6 @@
                 <option value="{{ $port->id }}">{{ $port->name }}</option>
             @endforeach
         </select>
-    </div>
-</div>
-
-<div class="row mb-3">
-    <div class="col-md-3">
-        <label>Check-in From</label>
-        <input type="time" name="default_checkin_from" class="form-control">
-    </div>
-    <div class="col-md-3">
-        <label>Check-in To</label>
-        <input type="time" name="default_checkin_to" class="form-control">
-    </div>
-    <div class="col-md-3">
-        <label>Check-out From</label>
-        <input type="time" name="default_checkout_from" class="form-control">
-    </div>
-    <div class="col-md-3">
-        <label>Check-out To</label>
-        <input type="time" name="default_checkout_to" class="form-control">
     </div>
 </div>
 
@@ -143,6 +126,22 @@
 <button class="btn btn-success">Create Template</button>
 <a href="{{ route('admin.templates.index') }}" class="btn btn-secondary">Cancel</a>
 </form>
+
 </div>
 </div>
+
+<!-- Choices.js -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+    new Choices('#vesselsAllowed', {
+        removeItemButton: true,
+        searchEnabled: true,
+        shouldSort: false,
+        placeholder: true,
+        placeholderValue: 'Select vessels'
+    });
+});
+</script>
 @endsection

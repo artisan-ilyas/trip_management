@@ -35,8 +35,30 @@
 <tr>
     <td>{{ $booking->id }}</td>
     <td>#{{ $booking->slot_id }}</td>
-    <td>{{ $booking->boat->name ?? '-' }}</td>
-    <td>{{ $booking->room->room_name ?? '-' }}</td>
+<td>
+    @if(!empty($booking->boats) && $booking->boats->count() > 0)
+        <ul class="mb-0">
+            @foreach($booking->boats as $boat)
+                <li>{{ $boat->name }}</li>
+            @endforeach
+        </ul>
+    @else
+        {{ $booking->boat->name ?? '-' }}
+    @endif
+</td>
+
+<td>
+    @if(!empty($booking->rooms) && $booking->rooms->count() > 0)
+        <ul class="mb-0">
+            @foreach($booking->rooms as $room)
+                <li>{{ $room->room_name }}</li>
+            @endforeach
+        </ul>
+    @else
+        {{ $booking->room->room_name ?? '-' }}
+    @endif
+</td>
+
     <td>{{ $booking->guest_name }}</td>
 <td>
     @if($booking->slot)
