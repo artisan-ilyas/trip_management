@@ -31,7 +31,7 @@
 <div class="row">
 <div class="col-md-6 mb-3">
     <label>Slot</label>
-    <select id="slotSelect" name="slot_id" class="form-control" disabled>
+    <select id="slotSelect" name="slot_id" class="form-control">
         <option value="">-- Select Slot (or create inline) --</option>
         @foreach($slots as $slot)
             <option value="{{ $slot['id'] }}"
@@ -278,13 +278,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderRoomsBySlot(slot) {
         roomWrapper.innerHTML = '';
         let roomsExist = false;
-
         const optionalRooms = slot.slot_type === 'Private Charter';
 
         function addRooms(boat) {
             if (!boat.rooms || !boat.rooms.length) return;
             roomsExist = true;
 
+            // Boat header
             const boatHeader = document.createElement('div');
             boatHeader.className = 'col-12 mb-2';
             boatHeader.innerHTML = `<strong>Boat: ${boat.name}</strong>`;
@@ -312,28 +312,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 const select = div.querySelector('select.room-guests');
                 const fullMsg = div.querySelector('.room-full');
 
-                // Pre-fill selected guests from bookingRoomGuests
-                if (bookingRoomGuests[room.id]) {
-                    bookingRoomGuests[room.id].forEach(gid => {
-                        const guest = guests.find(g => g.id === gid);
-                        if (!guest) return;
-                        const opt = document.createElement('option');
-                        opt.value = guest.id;
-                        opt.text = guest.name;
-                        opt.selected = true;
-                        select.add(opt);
-                    });
-                }
-
-                // Add remaining guests
-                guests.forEach(g => {
-                    if (!bookingRoomGuests[room.id] || !bookingRoomGuests[room.id].includes(g.id)) {
-                        const opt = document.createElement('option');
-                        opt.value = g.id;
-                        opt.text = g.name;
-                        select.add(opt);
-                    }
-                });
+                // Prepare Choices data with pre-selected guests
+                const choicesData = guests.map(g => ({
+                    value: g.id,
+                    label: g.name,
+                    selected: bookingRoomGuests[room.id]?.includes(g.id) || false
+                }));
 
                 const choices = new Choices(select, {
                     removeItemButton: true,
@@ -341,46 +325,51 @@ document.addEventListener('DOMContentLoaded', function () {
                     shouldSort: false,
                     placeholder: true,
                     placeholderValue: 'Select guests',
+                    choices: choicesData
                 });
                 choicesInstances.push(choices);
 
-                // Update room display
-            function updateRoomState() {
-                    const selectedCount = select.selectedOptions.length;
-                    div.querySelector('.assigned-guests').textContent = Array.from(select.selectedOptions).map(o => o.text).join(', ');
+                // Render assigned guests badges and room-full logic
+                function updateRoomState() {
+                    const selectedIds = choices.getValue(true); // array of selected guest IDs
+                    const assignedDiv = div.querySelector('.assigned-guests');
+                    assignedDiv.innerHTML = '';
 
-                    const fullMsg = div.querySelector('.room-full');
-                    fullMsg.style.display = selectedCount >= cap ? 'block' : 'none';
-
-                    // Disable unselected options when room is full
-                    const choicesList = select.closest('label').querySelector('.choices__list--multiple');
-                    Array.from(select.options).forEach(opt => {
-                        if (!opt.selected) {
-                            opt.disabled = selectedCount >= cap;
-                        }
+                    selectedIds.forEach(id => {
+                        const guest = guests.find(g => g.id == id);
+                        if (!guest) return;
+                        const span = document.createElement('span');
+                        span.className = 'badge bg-primary me-1 mb-1';
+                        span.style.cursor = 'pointer';
+                        span.textContent = guest.name + ' ×';
+                        span.addEventListener('click', () => {
+                            choices.removeActiveItemsByValue(id);
+                            updateRoomState();
+                        });
+                        assignedDiv.appendChild(span);
                     });
 
-                    // Update Choices.js so disabled options are reflected
-                    const choicesInstance = choicesInstances.find(c => c.passedElement.element === select);
-                    if (choicesInstance) {
-                        choicesInstance.setChoices(Array.from(select.options).map(o => ({
-                            value: o.value,
-                            label: o.text,
-                            selected: o.selected,
-                            disabled: o.disabled
-                        })), 'value', 'label', true);
+                    if (selectedIds.length >= cap) {
+                        select.closest('label').querySelector('.choices').style.display = 'none';
+                        fullMsg.style.display = 'block';
+                    } else {
+                        select.closest('label').querySelector('.choices').style.display = 'block';
+                        fullMsg.style.display = 'none';
                     }
                 }
 
-
-
-
-                select.addEventListener('change', updateRoomState);
+                // Initial render
                 updateRoomState();
+
+                // Update on changes
+                select.addEventListener('change', updateRoomState);
+                select.addEventListener('removeItem', updateRoomState);
             });
         }
 
+        // Render old single boat
         if (slot.boat) addRooms(slot.boat);
+        // Render multiple boats
         if (slot.boats && slot.boats.length) slot.boats.forEach(addRooms);
 
         roomMessage.style.display = roomsExist ? 'none' : 'block';
@@ -409,6 +398,7 @@ document.addEventListener('DOMContentLoaded', function () {
             success: function (guest) {
                 guests.push(guest);
 
+                // Add new guest to all Choices selects dynamically
                 choicesInstances.forEach(instance => {
                     instance.setChoices([{
                         value: guest.id,
@@ -452,5 +442,6 @@ document.addEventListener('DOMContentLoaded', function () {
     updateUSD();
 });
 </script>
+
 
 @endsection
