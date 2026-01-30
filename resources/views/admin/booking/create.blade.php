@@ -302,17 +302,39 @@ document.addEventListener('DOMContentLoaded', function(){
                 placeholderValue:'Select guests'
             });
 
-            function updateRoomState(){
-                const selectedCount = select.selectedOptions.length;
-                div.querySelector('.assigned-guests').textContent = Array.from(select.selectedOptions).map(o=>o.text).join(', ');
-                if(selectedCount >= cap){
-                    select.closest('label').querySelector('.choices').style.display='none';
-                    fullMsg.style.display='block';
-                } else {
-                    select.closest('label').querySelector('.choices').style.display='block';
-                    fullMsg.style.display='none';
-                }
-            }
+function updateRoomState() {
+    const selectedGuests = Array.from(select.selectedOptions);
+    const selectedCount = selectedGuests.length;
+
+    renderAssignedGuests(selectedGuests);
+
+    if (selectedCount >= cap) {
+        select.closest('label').querySelector('.choices').style.display = 'none';
+        fullMsg.style.display = 'block';
+    } else {
+        select.closest('label').querySelector('.choices').style.display = 'block';
+        fullMsg.style.display = 'none';
+    }
+}
+
+// Render assigned guests with remove button
+function renderAssignedGuests(selectedGuests) {
+    const assignedDiv = div.querySelector('.assigned-guests');
+    assignedDiv.innerHTML = '';
+
+    selectedGuests.forEach(opt => {
+        const span = document.createElement('span');
+        span.className = 'badge bg-primary me-1 mb-1';
+        span.style.cursor = 'pointer';
+        span.textContent = opt.text + ' ×';
+        span.addEventListener('click', () => {
+            choices.removeActiveItemsByValue(opt.value);
+            updateRoomState();
+        });
+        assignedDiv.appendChild(span);
+    });
+}
+
 
             select.addEventListener('change',updateRoomState);
             select.addEventListener('removeItem',updateRoomState);
@@ -328,7 +350,7 @@ document.addEventListener('DOMContentLoaded', function(){
     }
 
     roomMessage.style.display = roomsExist ? 'none' : 'block';
-}
+    }
 
 
     // On slot change

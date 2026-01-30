@@ -240,14 +240,24 @@ class BookingController extends Controller
 
  public function edit(Booking $booking)
 {
-    $booking->load(['rooms', 'guests', 'boats', 'slot.boats.rooms']);
+    // Load all necessary relations
+    $booking->load([
+        'rooms',
+        'guests',
+        'boats',
+        'slot.boat.rooms',   // single boat
+        'slot.boats.rooms'   // multiple boats
+    ]);
 
-    // Map guest IDs per room for JS
+    // Prepare guest IDs per room
     $bookingRoomGuests = BookingGuestRoom::where('booking_id', $booking->id)
         ->get()
         ->groupBy('room_id')
         ->map(fn($items) => $items->pluck('guest_id')->toArray())
         ->toArray();
+
+    // Convert slot relations to array for JS
+    $slot = $booking->slot ? $booking->slot->toArray() : null;
 
     return view('admin.booking.edit', [
         'booking' => $booking,
@@ -266,13 +276,15 @@ class BookingController extends Controller
         'companies' => auth()->user()->hasRole('admin')
             ? Company::all()
             : Company::where('id', auth()->user()->company_id)->get(),
+        'slot' => $slot // pass slot separately to JS if needed
     ]);
 }
 
 
+
     public function update(Request $request, Booking $booking)
     {
-        dd($request->all());
+        // dd($request->all());
         $validator = Validator::make($request->all(), [
             'source' => 'required|in:Direct,Agent',
             'agent_id' => 'nullable|required_if:source,Agent',
