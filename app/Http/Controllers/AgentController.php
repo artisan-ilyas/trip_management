@@ -32,7 +32,8 @@ class AgentController extends Controller
             $allTrips = Trip::all();
         }
 
-        return view('admin.agents.index', compact('agents', 'allTrips'));
+        $agent = null;
+        return view('admin.agents.index', compact('agent', 'agents', 'allTrips'));
     }
 
     public function assignTrips(Request $request, $agentId)
