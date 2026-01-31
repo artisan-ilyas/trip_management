@@ -33,6 +33,8 @@ class AgentController extends Controller
         }
 
         $agent = Agent::with('trips')->get();
+        $allTrips = Trip::all();
+
         return view('admin.agents.index', compact('agent', 'agents', 'allTrips'));
     }
 
