@@ -70,11 +70,21 @@ class GuestController extends Controller
 
     public function destroy(Guest $guest)
     {
+        // Check if guest has any bookings
+        $hasBookings = $guest->bookings()->exists(); // assumes Guest model has bookings() relation
+
+        if ($hasBookings) {
+            return redirect()
+                ->route('admin.guests.index')
+                ->with('error', 'Cannot delete this guest. The guest is associated with existing bookings.');
+        }
+
         $guest->delete();
 
         return redirect()
             ->route('admin.guests.index')
             ->with('success', 'Guest deleted successfully');
     }
+
 
 }
