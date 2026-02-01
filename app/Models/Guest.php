@@ -54,8 +54,8 @@ public function otherGuests()
     public function bookings()
     {
         return $this->belongsToMany(
-            BookingGuestRoom::class,
-            // 'booking_guest_room', // pivot table
+            Booking::class,
+            'booking_guest_room', // pivot table
             'guest_id',           // foreign key on pivot pointing to Guest
             'booking_id'          // foreign key on pivot pointing to Booking
         );
