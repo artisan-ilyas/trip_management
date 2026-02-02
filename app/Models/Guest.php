@@ -16,7 +16,7 @@ class Guest extends Model
         'medicalDietary', 'specialRequests', 'insuranceName', 'policyNumber',
         'emergencyName', 'emergencyRelation', 'emergencyPhone',
         'guestWhatsapp', 'guestEmail',
-        'image_path', 'pdf_path', 'video_path','company_id','phone','address'
+        'image_path', 'pdf_path', 'video_path','company_id','phone','address','first_name','last_name'
 
     ];
 
@@ -26,11 +26,12 @@ class Guest extends Model
     // }
 
     // Guest.php
-public function otherGuests()
-{
-    return $this->hasMany(OtherGuest::class, 'guest_id');
-}
-   public function trip()
+    public function otherGuests()
+    {
+        return $this->hasMany(OtherGuest::class, 'guest_id');
+    }
+
+    public function trip()
     {
         return $this->belongsTo(Trip::class, 'trip_id');
     }
@@ -59,6 +60,12 @@ public function otherGuests()
             'guest_id',           // foreign key on pivot pointing to Guest
             'booking_id'          // foreign key on pivot pointing to Booking
         );
+    }
+
+    // Computed full name (VERY useful everywhere)
+    public function getNameAttribute()
+    {
+        return trim($this->first_name . ' ' . $this->last_name);
     }
 }
 

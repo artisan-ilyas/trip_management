@@ -34,7 +34,13 @@ class BookingController extends Controller
 
     public function create()
     {
-        $bookedSlotIds = Booking::whereNotNull('slot_id')->pluck('slot_id')->unique()->toArray();
+
+        $bookedSlotIds = Booking::whereHas('slot', function ($q) {
+                $q->where('slot_type', 'Private Charter');
+            })
+            ->pluck('slot_id')
+            ->unique()
+            ->toArray();
 
         return view('admin.booking.create', [
             'slots' => Slot::with(['boat.rooms', 'boats.rooms'])->get()->toArray(),
@@ -86,11 +92,15 @@ class BookingController extends Controller
             $slot = Slot::with('boat.rooms', 'boats.rooms')->findOrFail($request->slot_id);
 
             // Prevent duplicate booking for existing slot
-            if (Booking::where('slot_id', $slot->id)->exists()) {
+            if (
+                $slot->slot_type == 'Private Charter' &&
+                Booking::where('slot_id', $slot->id)->exists()
+            ) {
                 return back()->withErrors([
-                    'slot_id' => 'This slot is already booked and cannot be reused.'
+                    'slot_id' => 'This private charter slot is already booked.'
                 ])->withInput();
             }
+
         } else {
             // Inline slot creation
             $request->validate([
@@ -237,7 +247,9 @@ class BookingController extends Controller
         // ------------------------------
         // STEP 7: MARK SLOT AS BOOKED
         // ------------------------------
-        $slot->update(['status' => 'Booked']);
+        if ($slot->slot_type == 'Private Charter') {
+            $slot->update(['status' => 'Booked']);
+        }
 
         // ------------------------------
         // DONE
@@ -266,11 +278,14 @@ class BookingController extends Controller
         $slot = $booking->slot ? $booking->slot->toArray() : null;
 
         // Booked slots except current booking slot
-        $bookedSlotIds = Booking::whereNotNull('slot_id')
+        $bookedSlotIds = Booking::whereHas('slot', function ($q) {
+                $q->where('slot_type', 'Private Charter');
+            })
             ->where('id', '!=', $booking->id)
             ->pluck('slot_id')
             ->unique()
             ->toArray();
+
 
         $slots = Slot::with(['boat.rooms', 'boats.rooms'])->get()->toArray();
 
@@ -317,11 +332,17 @@ class BookingController extends Controller
             $slot = Slot::with('boat.rooms', 'boats.rooms')->findOrFail($request->slot_id);
 
             // Prevent duplicate booking
-            if (Booking::where('slot_id', $slot->id)->where('id', '!=', $booking->id)->exists()) {
+            if (
+                $slot->slot_type === 'Private Charter' &&
+                Booking::where('slot_id', $slot->id)
+                    ->where('id', '!=', $booking->id)
+                    ->exists()
+            ) {
                 return back()->withErrors([
-                    'slot_id' => 'This slot is already booked.'
+                    'slot_id' => 'This private charter slot is already booked.'
                 ])->withInput();
             }
+
         } else {
             $slot = Slot::create([
                 'boat_id' => $request->boat_id,
@@ -419,7 +440,9 @@ class BookingController extends Controller
         }
 
         // Mark slot as booked
-        $slot->update(['status' => 'Booked']);
+        if ($slot->slot_type == 'Private Charter') {
+            $slot->update(['status' => 'Booked']);
+        }
 
         return redirect()->route('admin.bookings.index')->with('success', 'Booking updated successfully');
     }
