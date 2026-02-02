@@ -24,9 +24,10 @@ class GuestController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'name'       => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
             'gender'     => 'required|string|max:50',
-            'email'      => 'nullable|email|max:255',
+            'email'      => 'nullable|email|max:255|unique:guests,email',
             'passport'   => 'nullable|string|max:255',
             'phone'      => 'nullable|string|max:50',
             'address'    => 'nullable|string|max:255',
@@ -51,9 +52,10 @@ class GuestController extends Controller
     public function update(Request $request, Guest $guest)
     {
         $data = $request->validate([
-            'name'       => 'required|string|max:255',
+            'first_name' => 'required|string|max:255',
+            'last_name'  => 'required|string|max:255',
             'gender'     => 'required|string|max:50',
-            'email'      => 'nullable|email|max:255',
+            'email'      => 'nullable|email|max:255|unique:guests,email,' . $guest->id,
             'passport'   => 'nullable|string|max:255',
             'phone'      => 'nullable|string|max:50',
             'address'    => 'nullable|string|max:255',

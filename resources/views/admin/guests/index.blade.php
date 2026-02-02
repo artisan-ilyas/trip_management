@@ -42,6 +42,12 @@
                            class="btn btn-sm btn-warning">
                             Edit
                         </a>
+                        @if($guest->bookings()->exists())
+                            <button class="btn btn-sm btn-secondary" disabled>
+                                Has Bookings
+                            </button>
+                        @else
+
                         <form action="{{ route('admin.guests.destroy', $guest->id) }}"
                             method="POST"
                             class="d-inline"
@@ -53,7 +59,7 @@
                                 Delete
                             </button>
                         </form>
-
+                    @endif
                     </td>
                 </tr>
             @empty

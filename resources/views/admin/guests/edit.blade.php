@@ -4,6 +4,19 @@
 <div class="content-wrapper">
 <div class="container pt-3">
     <h4>Edit Guest</h4>
+        @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if ($errors->any())
+        <div class="alert alert-danger">
+            <ul class="mb-0">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <form action="{{ route('admin.guests.update', $guest->id) }}" method="POST">
         @csrf
@@ -11,10 +24,17 @@
 
 
         <div class="mb-3">
-            <label>Name</label>
-            <input type="text" name="name"
-                   value="{{ $guest->name }}"
-                   class="form-control" required>
+            <label>First Name</label>
+            <input type="text" name="first_name"
+                value="{{ $guest->first_name }}"
+                class="form-control" required>
+        </div>
+
+        <div class="mb-3">
+            <label>Last Name</label>
+            <input type="text" name="last_name"
+                value="{{ $guest->last_name }}"
+                class="form-control" required>
         </div>
 
         <div class="mb-3">
