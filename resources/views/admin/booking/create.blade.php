@@ -103,6 +103,7 @@
     <select name="status" class="form-control" required>
         <option value="Pending">Pending</option>
         <option value="DP Paid">DP Paid</option>
+        <option value="Full Paid">Full Paid</option>
         <option value="Waiting List">Waiting List</option>
         <option value="Canceled">Canceled</option>
     </select>
