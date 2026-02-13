@@ -46,7 +46,7 @@
     {{-- Bookings counts --}}
     <td>
         @php
-            $confirmed = $slot->bookings->where('status','DP Paid')->count();
+            $confirmed = $slot->bookings->where('status','DP Paid')->count() + $slot->bookings->where('status','Full Paid')->count();
             $pending = $slot->bookings->where('status','Pending')->count();
             $canceled = $slot->bookings->where('status','Canceled')->count();
         @endphp

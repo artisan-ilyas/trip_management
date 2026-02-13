@@ -103,7 +103,7 @@
 <div class="col-md-6 mb-3">
     <label>Status</label>
     <select name="status" class="form-control" required>
-        @foreach(['Pending','Available','Booked','Completed','Cancelled'] as $status)
+        @foreach(['Pending','DP Paid','Full Paid','Waiting List','Canceled'] as $status)
             <option value="{{ $status }}" {{ old('status', $booking->status)==$status?'selected':'' }}>
                 {{ $status }}
             </option>
