@@ -5,7 +5,6 @@
 
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="h4">Audit & Logging</h2>
-            {{-- <a href="{{ route('boat.index') }}" class="btn btn-secondary">Back</a> --}}
         </div>
 
         <div class="card">
