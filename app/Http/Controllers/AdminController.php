@@ -22,19 +22,6 @@ class AdminController extends Controller
         $this->tenant = app()->bound('tenant') ? app('tenant') : null;
     }
 
-    public function dashboard()
-    {
-        if ($this->tenant) {
-            $agentsCount = Agent::where('company_id', $this->tenant->id)->count();
-            $tripsCount = Trip::where('company_id', $this->tenant->id)->count();
-        } else {
-            $agentsCount = Agent::count();
-            $tripsCount = Trip::count();
-        }
-
-        return view('dashboard', compact('agentsCount', 'tripsCount'));
-    }
-
     public function index()
     {
         if ($this->tenant) {
