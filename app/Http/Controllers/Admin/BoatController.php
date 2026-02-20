@@ -68,7 +68,7 @@ class BoatController extends Controller
 
         return back()->with('success', 'Boat deleted.');
     }
-    
+
     public function show(Boat $boat)
     {
         $boat->load('rooms', 'slots', 'slots.bookings');
@@ -82,7 +82,7 @@ class BoatController extends Controller
         $agentCount = $bookings->where('source','Agent')->count();
         $revenue = $bookings->sum('price');
 
-        return view('admin.boats.show', compact(
+        return view('admin.boat.show', compact(
             'boat','bookings','nightsBooked','occupancyRate','directCount','agentCount','revenue'
         ));
     }
