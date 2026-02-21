@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function(){
                         ></select>
 
                         <div class="assigned-guests mt-1 text-muted"></div>
-                        <div class="room-full text-danger mt-1" style="display:${remaining <= 0 ? 'block' : 'none'};">
+                        <div class="room-full text-danger mt-1" style="display:${remaining == 0 ? 'block' : 'none'};">
                             Room fully booked for this trip
                         </div>
                     </label>
