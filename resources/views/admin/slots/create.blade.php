@@ -54,7 +54,7 @@
 <div class="row mb-3">
     <div class="col-md-6">
         <label>Vessels</label>
-        <select name="boats_allowed[]" id="boatsAllowed" class="form-control" multiple required>
+        <select name="boats_allowed[]" id="boatsAllowed" class="form-control" required>
             @foreach($boats as $boat)
                 <option value="{{ $boat->id }}"
                     {{ collect(old('boats_allowed', []))->contains($boat->id) ? 'selected' : '' }}>
