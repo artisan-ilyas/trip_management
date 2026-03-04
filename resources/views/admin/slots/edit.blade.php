@@ -62,7 +62,7 @@
 <div class="row mb-3">
     <div class="col-md-6">
         <label>Vessels</label>
-        <select name="boats_allowed[]" id="boatsAllowed" class="form-control" multiple required>
+        <select name="boats_allowed[]" id="boatsAllowed" class="form-control" required>
             @foreach($boats as $boat)
                 <option value="{{ $boat->id }}"
                     {{ in_array($boat->id, old('boats_allowed', $slot->boats->pluck('id')->toArray())) ? 'selected' : '' }}>
