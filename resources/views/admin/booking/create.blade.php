@@ -1,5 +1,47 @@
 @extends('layouts.admin')
 @section('content')
+<style>
+.guest-pool{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+}
+
+.guest-card{
+    padding:6px 10px;
+    background:#0d6efd;
+    color:white;
+    border-radius:6px;
+    cursor:grab;
+    font-size:13px;
+}
+
+.room-dropzone{
+    min-height:90px;
+    border:2px dashed #d9d9d9;
+    padding:10px;
+    border-radius:6px;
+    transition:.2s;
+}
+
+.room-dropzone.dragover{
+    background:#eef6ff;
+    border-color:#0d6efd;
+}
+
+.room-capacity-bar{
+    height:6px;
+    background:#eee;
+    border-radius:4px;
+    margin-top:6px;
+}
+
+.room-capacity-fill{
+    height:6px;
+    background:#0d6efd;
+    border-radius:4px;
+}
+</style>
     <div class="content-wrapper">
         <div class="container mx-2 pt-3">
 
@@ -28,6 +70,19 @@
 
                     {{-- Slot --}}
                     <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label>Customer (Lead Guest)</label>
+                            <select id="customerSelect" name="lead_customer_id" class="form-control">
+                                <option value="">Search customer...</option>
+                                @foreach($guests as $g)
+                                    <option value="{{ $g->id }}">
+                                        {{ $g->first_name }} {{ $g->last_name }}
+                                        {{ $g->email ? '• '.$g->email : '' }}
+                                        {{ $g->phone ? '• '.$g->phone : '' }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
                     <div class="col-md-6 mb-3">
                         <label>Slot</label>
                             <select id="slotSelect" name="slot_id" class="form-control">
@@ -216,6 +271,18 @@
                         </div>
                     </div>
 
+                   <div class="card p-3 mb-3">
+                    <h5>Trip Guests</h5>
+
+                        <select id="guestSelector" class="form-control">
+                            <option value="">Search guest...</option>
+                        </select>
+
+                    <div id="tripGuestPool" class="guest-pool mt-3"></div>
+
+                    <div id="tripGuestsInputs"></div>
+                </div>
+
                     {{-- Rooms --}}
                     <div class="mb-3">
                         <label class="fw-bold">Rooms & Guests</label>
@@ -306,452 +373,386 @@
 
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener('DOMContentLoaded', function() {
+
+    // -------------------------
+    // GLOBAL VARIABLES
+    // -------------------------
+    let tripGuests = [];
+    let roomAssignments = {};
+    const choicesInstances = [];
 
     const slots = @json($slots);
     const guests = @json($guests);
     const roomUsageBySlot = @json($roomUsageBySlot);
-    const choicesInstances = []; // declare globally
-    const boatsWithRooms = @json($boats); // must include rooms relation
+    const boatsWithRooms = @json($boats); // include rooms relation
 
-
-
+    // -------------------------
+    // ELEMENTS
+    // -------------------------
     const slotSelect = document.getElementById('slotSelect');
     const roomWrapper = document.getElementById('roomWrapper');
     const roomMessage = document.getElementById('roomMessage');
-    const agentSelect = document.getElementById('agentSelect');
-    const sourceSelect = document.getElementById('sourceSelect');
     const inlineSlotWrapper = document.getElementById('inlineSlotWrapper');
     const inlineStart = document.getElementById('inlineStartDate');
     const inlineDuration = document.getElementById('inlineDurationNights');
     const inlineEnd = document.getElementById('inlineEndDate');
     const vesselsSelect = document.getElementById('inlineBoatsAllowed');
+    const guestSelector = document.getElementById('guestSelector');
+    const agentSelect = document.getElementById('agentSelect');
+    const sourceSelect = document.getElementById('sourceSelect');
 
-    const today = new Date().toISOString().split('T')[0];
-    document.getElementById('inlineStartDate').setAttribute('min', today);
+    // -------------------------
+    // GUEST SELECTOR
+    // -------------------------
 
-    function toggleInlineRequired(isActive) {
-
-    const inlineWrapper = document.getElementById('inlineSlotWrapper');
-    const fields = inlineWrapper.querySelectorAll('input, select, textarea');
-
-    fields.forEach(field => {
-        if (isActive) {
-            field.setAttribute('required', 'required');
-            field.disabled = false;
-        } else {
-            field.removeAttribute('required');
-            field.disabled = true;
-        }
-    });
-}
-
-
-
-
-function renderRoomsForInlineBoats(selectedBoatIds) {
-
-    roomWrapper.innerHTML = '';
-    roomMessage.style.display = 'none';
-
-    if (!selectedBoatIds.length) {
-        roomMessage.textContent = 'Select a vessel to see rooms.';
-        roomMessage.style.display = 'block';
-        return;
-    }
-
-    selectedBoatIds.forEach(boatId => {
-
-        const boat = boatsWithRooms.find(b => b.id == boatId);
-        if (!boat || !boat.rooms || !boat.rooms.length) return;
-
-        const boatHeader = document.createElement('div');
-        boatHeader.className = 'col-12 mb-2';
-        boatHeader.innerHTML = `<strong>Boat: ${boat.name}</strong>`;
-        roomWrapper.appendChild(boatHeader);
-
-        boat.rooms.forEach(room => {
-
-            const capacity = parseInt(room.capacity || 0) + parseInt(room.extra_beds || 0);
-
-            const div = document.createElement('div');
-            div.className = 'col-md-4';
-
-            div.innerHTML = `
-                <label class="card p-2 h-100">
-                    <strong>${room.room_name}</strong><br>
-                    <small class="text-muted">
-                        Remaining ${capacity} of ${capacity}
-                    </small>
-
-                    <select
-                        multiple
-                        class="form-control room-guests mt-2"
-                        name="guest_rooms[${room.id}][]"
-                        data-cap="${capacity}"
-                        ${capacity <= 0 ? 'disabled' : ''}
-                    ></select>
-
-                    <div class="assigned-guests mt-1 text-muted"></div>
-                    <div class="room-full text-danger mt-1"
-                         style="${capacity <= 0 ? 'display:block;' : 'display:none;'}">
-                        Room fully booked for this trip
-                    </div>
-                </label>
-            `;
-
-            roomWrapper.appendChild(div);
-
-            const select = div.querySelector('select.room-guests');
-            const fullMsg = div.querySelector('.room-full');
-            const smallText = div.querySelector('small');
-
-            // Populate guests
-            guests.forEach(g => {
-                const opt = document.createElement('option');
-                opt.value = g.id;
-                opt.text = ((g.first_name || '') + ' ' + (g.last_name || '')).trim() || g.name;
-                select.add(opt);
-            });
-
-            const choices = new Choices(select, {
-                removeItemButton: true,
-                searchEnabled: true,
-                shouldSort: false,
-                placeholder: true,
-                placeholderValue: 'Select guests'
-            });
-
-            choicesInstances.push(choices);
-
-         function updateRoomState() {
-
-    const selectedCount = select.selectedOptions.length;
-    const remaining = capacity - selectedCount;
-
-    smallText.textContent = `Remaining ${remaining} of ${capacity}`;
-
-    if (remaining <= 0) {
-        fullMsg.style.display = 'block';
-
-        // ❌ DO NOT disable select (otherwise it won’t submit)
-        // select.disabled = true;
-
-        // Instead, block adding new items
-        select.setAttribute('data-full', '1');
-    } else {
-        fullMsg.style.display = 'none';
-        select.removeAttribute('data-full');
-    }
-
-    // Render badges
-    const container = div.querySelector('.assigned-guests');
-    container.innerHTML = '';
-
-    Array.from(select.selectedOptions).forEach(opt => {
-        const badge = document.createElement('span');
-        badge.className = 'badge bg-primary me-1 mb-1';
-        badge.style.cursor = 'pointer';
-        badge.textContent = opt.text + ' ×';
-
-        badge.onclick = () => {
-            Swal.fire({
-                title: 'Remove guest?',
-                text: opt.text,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Remove'
-            }).then(res => {
-                if (res.isConfirmed) {
-                    choices.removeActiveItemsByValue(opt.value);
-                    updateRoomState();
-                }
-            });
-        };
-
-        container.appendChild(badge);
-    });
-}
-
-       select.addEventListener('change', function () {
-
-    const selectedCount = select.selectedOptions.length;
-
-    if (selectedCount > capacity) {
-        choices.removeActiveItemsByValue(
-            select.selectedOptions[selectedCount - 1].value
-        );
-
-        Swal.fire({
-            icon: 'warning',
-            title: 'Room Full',
-            text: 'Room capacity exceeded.'
-        });
-
-        return;
-    }
-
-    updateRoomState();
-});
-
-            updateRoomState();
-
-        });
-
-    });
-}
-    /* Trigger when boat selection changes */
-    vesselsSelect.addEventListener('change', function () {
-
-        const selectedIds = Array.from(this.selectedOptions).map(o => o.value);
-        renderRoomsForInlineBoats(selectedIds);
-
-    });
-
-    const vesselsChoices = new Choices(vesselsSelect, {
-        removeItemButton: true,
+    new Choices('#customerSelect', {
         searchEnabled: true,
         shouldSort: false,
         placeholder: true,
-        placeholderValue: 'Select vessels'
+        placeholderValue: 'Search customer...'
     });
 
-    function calculateInlineEndDate() {
-        if (!inlineStart.value || !inlineDuration.value) return;
+    const guestChoices = new Choices(guestSelector,{
+        searchEnabled:true,
+        removeItemButton:false,
+        shouldSort:false,
+        placeholder:true,
+        placeholderValue:'Search guest'
+    });
 
+    guestChoices.setChoices(
+        guests.map(g=>({
+            value:g.id,
+            label:`${g.first_name} ${g.last_name}`
+        })),
+        'value','label',true
+    );
+
+    // Add "Add New Guest" option
+    guestChoices.setChoices([{
+        value:'add_new_guest',
+        label:'➕ Add New Guest'
+    }],'value','label',false);
+
+    guestSelector.addEventListener('change', function() {
+        const id = this.value;
+        if(id === 'add_new_guest'){
+            new bootstrap.Modal(document.getElementById('guestModal')).show();
+            return;
+        }
+        const guest = guests.find(g => g.id == id);
+        if(!guest) return;
+        if(tripGuests.find(g => g.id == id)){
+            Swal.fire('Guest already added');
+            return;
+        }
+        tripGuests.push(guest);
+        renderGuestPool();
+    });
+
+    // -------------------------
+    // TRIP GUEST POOL
+    // -------------------------
+    function renderGuestPool() {
+        const pool = document.getElementById('tripGuestPool');
+        pool.innerHTML='';
+        tripGuests.forEach(g=>{
+            const div=document.createElement('div');
+            div.className='guest-card';
+            div.draggable=true;
+            div.dataset.id=g.id;
+            div.innerText=g.first_name+" "+g.last_name;
+            div.addEventListener('dragstart', e=>{
+                e.dataTransfer.setData('guestId', g.id);
+            });
+            pool.appendChild(div);
+        });
+    }
+
+    // -------------------------
+    // INLINE SLOT TOGGLE
+    // -------------------------
+    function toggleInlineFields(active){
+        const fields = inlineSlotWrapper.querySelectorAll('input, select, textarea');
+        fields.forEach(f=>{
+            if(active){
+                f.setAttribute('required','required');
+                f.disabled=false;
+            }else{
+                f.removeAttribute('required');
+                f.disabled=true;
+            }
+        });
+        inlineSlotWrapper.style.display = active ? 'block' : 'none';
+    }
+
+    // Initial toggle
+    toggleInlineFields(!slotSelect.value);
+
+    // -------------------------
+    // INLINE DATE CALCULATION
+    // -------------------------
+    const today = new Date().toISOString().split('T')[0];
+    inlineStart.setAttribute('min', today);
+
+    function calculateInlineEndDate(){
+        if(!inlineStart.value || !inlineDuration.value) return;
         const startDate = new Date(inlineStart.value);
         const nights = parseInt(inlineDuration.value);
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + nights);
-
         inlineEnd.valueAsDate = endDate;
     }
 
-    if (inlineStart && inlineDuration) {
-        inlineStart.addEventListener('change', calculateInlineEndDate);
-        inlineDuration.addEventListener('input', calculateInlineEndDate);
-    }
+    inlineStart.addEventListener('change', calculateInlineEndDate);
+    inlineDuration.addEventListener('input', calculateInlineEndDate);
 
-    /* -----------------------------
-       SOURCE / AGENT TOGGLE
-    ------------------------------ */
-    function toggleAgent(){
-        agentSelect.disabled = sourceSelect.value !== 'Agent';
-        if(agentSelect.disabled) agentSelect.value = '';
-    }
-    toggleAgent();
-    sourceSelect.addEventListener('change', toggleAgent);
+    // -------------------------
+    // SLOT SELECT CHANGE
+    // -------------------------
+    slotSelect.addEventListener('change', function(){
+        const slotId = this.value;
+        const slot = slots.find(s=>s.id==slotId);
 
-    /* -----------------------------
-       RENDER ROOMS
-    ------------------------------ */
-function renderRoomsByBoat(slot) {
-    roomWrapper.innerHTML = '';
+        if(slot){
+            toggleInlineFields(false);
+            renderRoomsBySlot(slot);
+        }else{
+            toggleInlineFields(true);
+            roomWrapper.innerHTML='';
+            roomMessage.textContent='Please select a slot to see rooms.';
+            roomMessage.style.display='block';
+        }
+    });
+
+    // -------------------------
+    // RENDER ROOMS FOR SLOTS
+    // -------------------------
+function renderRoomsBySlot(slot){
+    roomWrapper.innerHTML='';
 
     const isPrivate = slot.slot_type === 'Private Charter';
+    roomMessage.textContent = isPrivate
+        ? 'Private Charter: room assignment is optional.'
+        : 'Open Trip: assign any available rooms.';
+    roomMessage.style.display='block';
 
-    if (isPrivate) {
-        roomMessage.textContent = 'Private Charter: room assignment is optional.';
-    } else {
-        roomMessage.textContent = 'Open Trip: assign any available rooms.';
-    }
-    roomMessage.style.display = 'block';
+    let guestAssignments={};
 
-    function addRooms(boat) {
-        if (!boat.rooms || !boat.rooms.length) return;
+    function addRooms(boat){
+        if(!boat.rooms || !boat.rooms.length) return;
+        const boatHeader=document.createElement('div');
+        boatHeader.className='col-12 mb-2';
+        boatHeader.innerHTML=`<strong>Boat: ${boat.name}</strong>`;
+        roomWrapper.appendChild(boatHeader);
 
-            const boatHeader = document.createElement('div');
-            boatHeader.className = 'col-12 mb-2';
-            boatHeader.innerHTML = `<strong>Boat: ${boat.name}</strong>`;
-            roomWrapper.appendChild(boatHeader);
+        boat.rooms.forEach(room=>{
+            const cap = parseInt(room.capacity||0)+parseInt(room.extra_beds||0);
+            const usage = roomUsageBySlot?.[slot.id]?.[room.id] || {};
+            const assignedGuests = (usage.guests||[]).map(id=>parseInt(id));
+            guestAssignments[room.id] = [...assignedGuests];
 
-            boat.rooms.forEach(room => {
-                const cap = parseInt(room.capacity || 0) + parseInt(room.extra_beds || 0);
-                const usage = roomUsageBySlot?.[slot.id]?.[room.id] || {};
-                const used = usage.used || 0;
-                const assignedGuests = (usage.guests || []).map(id => parseInt(id, 10));
+            const div = document.createElement('div');
+            div.className='col-md-4 mb-3';
+            div.innerHTML = `
+                <label class="card p-2 h-100">
+                    <strong>${room.room_name}</strong>
+                    <small class="text-muted room-capacity mt-1"></small>
+                    <div class="room-dropzone mt-2"
+                        data-room="${room.id}"
+                        data-cap="${cap}"
+                        style="min-height:90px;border:2px dashed #ccc;border-radius:6px;padding:8px;">
+                    </div>
+                    <input type="hidden" class="room-input" name="guest_rooms[${room.id}]">
+                    <div class="room-full text-danger mt-1" style="display:none;">Room fully booked</div>
+                </label>
+            `;
+            roomWrapper.appendChild(div);
 
-                // Adjust remaining seats by subtracting pre-assigned guests
-                let remaining = cap - assignedGuests.length;
-                remaining = remaining < 0 ? 0 : remaining;
+            const dropzone = div.querySelector('.room-dropzone');
+            const hiddenInput = div.querySelector('.room-input');
+            const capacityText = div.querySelector('.room-capacity');
+            const fullMsg = div.querySelector('.room-full');
 
-                const div = document.createElement('div');
-                div.className = 'col-md-4';
-                div.innerHTML = `
-                    <label class="card p-2 h-100">
-                        <strong>${room.room_name}</strong><br>
-                        <small class="text-muted">
-                            ${remaining > 0 ? `Remaining ${remaining} of ${cap}` : 'Fully booked'}
-                        </small>
+            function renderGuests(){
+                dropzone.innerHTML='';
+                guestAssignments[room.id].forEach(id=>{
+                    const guest = guests.find(g=>g.id==id);
+                    if(!guest) return;
+                    const badge=document.createElement('span');
+                    badge.className='badge me-1 mb-1';
+                    badge.style.cursor='pointer';
+                    badge.style.background = usage.guests?.includes(id) ? '#6c757d' : '#0d6efd'; // grey for previous booking
+                    badge.textContent=(guest.first_name+' '+guest.last_name).trim()+' ×';
 
-                        <select
-                            multiple
-                            class="form-control room-guests mt-2"
-                            name="guest_rooms[${room.id}][]"
-                            data-cap="${cap}"
-                            data-remaining="${remaining}"
-                            ${(!isPrivate && remaining <= 0) ? 'disabled' : ''}
-                        ></select>
-
-                        <div class="assigned-guests mt-1 text-muted"></div>
-                        <div class="room-full text-danger mt-1" style="display:${remaining <= 0 ? 'block' : 'none'};">
-                            Room fully booked for this trip
-                        </div>
-                    </label>
-                `;
-                roomWrapper.appendChild(div);
-
-                const select = div.querySelector('select.room-guests');
-                const fullMsg = div.querySelector('.room-full');
-
-                // Add all guests to select, preselect already assigned ones
-                guests.forEach(g => {
-                    const opt = document.createElement('option');
-                    opt.value = g.id;
-                    opt.text = ((g.first_name || '') + ' ' + (g.last_name || '')).trim() || g.name;
-
-                    if (assignedGuests.includes(parseInt(g.id, 10))) {
-                        opt.selected = true;
+                    if(!usage.guests?.includes(id)){
+                        // Only allow removal of guests added in this session
+                        badge.onclick=()=>{
+                            Swal.fire({
+                                title:'Remove guest?',
+                                icon:'warning',
+                                showCancelButton:true
+                            }).then(res=>{
+                                if(!res.isConfirmed) return;
+                                guestAssignments[room.id] = guestAssignments[room.id].filter(gid=>gid!==id);
+                                tripGuests.push(guest);
+                                renderGuestPool();
+                                updateAllRooms();
+                            });
+                        };
                     }
 
-                    select.add(opt);
+                    dropzone.appendChild(badge);
                 });
+                hiddenInput.value = guestAssignments[room.id].join(',');
+                const used = guestAssignments[room.id].length;
+                const remaining = cap-used;
+                capacityText.textContent = remaining>0 ? `Remaining ${remaining} of ${cap}` : 'Fully booked';
+                fullMsg.style.display = remaining<=0 ? 'block':'none';
+            }
 
-                // Initialize Choices.js
-                const choices = new Choices(select, {
-                    removeItemButton: true,
-                    searchEnabled: true,
-                    shouldSort: false,
-                    placeholder: true,
-                    placeholderValue: 'Select guests'
-                });
-
-                if (!isPrivate && remaining <= 0) {
-                    select.disabled = true;
+            dropzone.addEventListener('dragover', e=>{ e.preventDefault(); });
+            dropzone.addEventListener('drop', e=>{
+                e.preventDefault();
+                const guestId=parseInt(e.dataTransfer.getData('guestId'));
+                if(!guestId) return;
+                if(guestAssignments[room.id].includes(guestId)) return;
+                if(!isPrivate && guestAssignments[room.id].length >= cap){
+                    Swal.fire({icon:'warning', title:'Room Full'});
+                    return;
                 }
-
-                choicesInstances.push(choices);
-
-                function renderAssignedGuests() {
-                    const container = div.querySelector('.assigned-guests');
-                    container.innerHTML = '';
-
-                    Array.from(select.selectedOptions).forEach(opt => {
-                        const guestId = parseInt(opt.value, 10);
-                        const isPreAssigned = assignedGuests.includes(guestId);
-
-                        const badge = document.createElement('span');
-                        badge.className = 'badge ' + (isPreAssigned ? 'bg-secondary' : 'bg-primary') + ' me-1 mb-1';
-                        badge.style.cursor = 'pointer';
-                        badge.textContent = opt.text + ' ×';
-
-                        if (remaining > 0 || isPrivate) {
-                            badge.onclick = () => {
-                                Swal.fire({
-                                    title: 'Remove guest?',
-                                    text: opt.text,
-                                    icon: 'warning',
-                                    showCancelButton: true,
-                                    confirmButtonText: 'Remove'
-                                }).then(res => {
-                                    if (res.isConfirmed) {
-                                        choices.removeActiveItemsByValue(opt.value);
-                                        updateRoomState();
-                                    }
-                                });
-                            };
-                        }
-
-                        container.appendChild(badge);
-                    });
-                }
-
-                function updateRoomState() {
-                    // Recalculate remaining seats based on current selected guests
-                    const selectedCount = select.selectedOptions.length;
-                    const currentRemaining = remaining - (selectedCount - assignedGuests.length);
-
-                    renderAssignedGuests();
-
-                    if (!isPrivate && currentRemaining <= 0) {
-                        select.closest('label').querySelector('.choices').style.display = 'none';
-                        fullMsg.style.display = 'block';
-                    } else {
-                        select.closest('label').querySelector('.choices').style.display = 'block';
-                        if (currentRemaining > 0) fullMsg.style.display = 'none';
+                // Remove guest from other rooms only if they are added in this session
+                Object.keys(guestAssignments).forEach(rid=>{
+                    if(!roomUsageBySlot?.[slot.id]?.[rid]) {
+                        guestAssignments[rid] = guestAssignments[rid].filter(id=>id!==guestId);
                     }
-                }
-
-                updateRoomState();
-
-                select.addEventListener('change', () => {
-                    const selectedCount = select.selectedOptions.length;
-                    const currentRemaining = remaining - (selectedCount - assignedGuests.length);
-
-                    if (!isPrivate && currentRemaining < 0) {
-                        choices.removeActiveItemsByValue(
-                            select.selectedOptions[select.selectedOptions.length - 1].value
-                        );
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Room Full',
-                            text: 'This room has no remaining capacity.'
-                        });
-                    }
-                    updateRoomState();
                 });
+                guestAssignments[room.id].push(guestId);
+                tripGuests = tripGuests.filter(g=>g.id!==guestId);
+                renderGuestPool();
+                updateAllRooms();
             });
-        }
 
-        if (slot.boat) addRooms(slot.boat);
-        if (slot.boats && slot.boats.length) slot.boats.forEach(addRooms);
+            div.updateRoomState = renderGuests;
+            renderGuests();
+        });
     }
 
-
-
-
-
-
-    /* -----------------------------
-       SLOT CHANGE
-    ------------------------------ */
-   slotSelect.addEventListener('change', function(){
-
-    const slot = slots.find(s => s.id == this.value);
-    const inlineFields = inlineSlotWrapper.querySelectorAll('input, select, textarea');
-
-    if (!slot) {
-        // ✅ INLINE MODE ACTIVE
-        inlineSlotWrapper.classList.remove('d-none');
-
-        inlineFields.forEach(field => {
-            field.disabled = false;
-            field.setAttribute('required', 'required');
+    function updateAllRooms(){
+        document.querySelectorAll('#roomWrapper .col-md-4').forEach(room=>{
+            if(room.updateRoomState) room.updateRoomState();
         });
+    }
 
-        roomWrapper.innerHTML = '';
-        roomMessage.style.display = 'block';
+    if(slot.boat) addRooms(slot.boat);
+    if(slot.boats) slot.boats.forEach(addRooms);
+    updateAllRooms();
+}
+
+    // -------------------------
+    // INLINE BOAT ROOMS
+    // -------------------------
+function renderRoomsForInlineBoats(selectedBoatIds){
+    roomWrapper.innerHTML='';
+    roomMessage.style.display='none';
+
+    if(!selectedBoatIds.length){
+        roomMessage.textContent='Select a vessel to see rooms.';
+        roomMessage.style.display='block';
         return;
     }
 
-    // ✅ NORMAL SLOT MODE
-    inlineSlotWrapper.classList.add('d-none');
+    // Track guests assigned to inline rooms
+    let guestAssignments = {};
 
-    inlineFields.forEach(field => {
-        field.disabled = true;
-        field.removeAttribute('required');
+    selectedBoatIds.forEach(boatId=>{
+        const boat = boatsWithRooms.find(b=>b.id==boatId);
+        if(!boat || !boat.rooms || !boat.rooms.length) return;
+
+        const boatHeader = document.createElement('div');
+        boatHeader.className='col-12 mb-2';
+        boatHeader.innerHTML=`<strong>Boat: ${boat.name}</strong>`;
+        roomWrapper.appendChild(boatHeader);
+
+        boat.rooms.forEach(room=>{
+            const capacity = parseInt(room.capacity||0)+parseInt(room.extra_beds||0);
+            guestAssignments[room.id] = [];
+
+            const div=document.createElement('div');
+            div.className='col-md-4 mb-3';
+            div.innerHTML = `
+                <label class="card p-2 h-100">
+                    <strong>${room.room_name}</strong>
+                    <small class="text-muted room-capacity mt-1">Capacity ${capacity}</small>
+                    <div class="room-dropzone mt-2" data-room="${room.id}" data-cap="${capacity}" style="min-height:90px;border:2px dashed #ccc;border-radius:6px;padding:8px;"></div>
+                    <input type="hidden" name="guest_rooms[${room.id}]" class="room-input">
+                </label>
+            `;
+            roomWrapper.appendChild(div);
+
+            const dropzone = div.querySelector('.room-dropzone');
+            const hiddenInput = div.querySelector('.room-input');
+            const capacityText = div.querySelector('.room-capacity');
+
+            // Render guests inside room
+            function renderGuests(){
+                dropzone.innerHTML='';
+                guestAssignments[room.id].forEach(id=>{
+                    const guest = guests.find(g=>g.id==id);
+                    if(!guest) return;
+                    const badge = document.createElement('span');
+                    badge.className='badge bg-primary me-1 mb-1';
+                    badge.style.cursor='pointer';
+                    badge.textContent=(guest.first_name+' '+guest.last_name).trim()+' ×';
+                    badge.onclick = ()=>{
+                        Swal.fire({
+                            title:'Remove guest?',
+                            icon:'warning',
+                            showCancelButton:true
+                        }).then(res=>{
+                            if(!res.isConfirmed) return;
+                            guestAssignments[room.id] = guestAssignments[room.id].filter(gid=>gid!==id);
+                            tripGuests.push(guest);
+                            renderGuestPool();
+                            renderGuests();
+                        });
+                    };
+                    dropzone.appendChild(badge);
+                });
+                hiddenInput.value = guestAssignments[room.id].join(',');
+                const remaining = capacity - guestAssignments[room.id].length;
+                capacityText.textContent = remaining>0 ? `Remaining ${remaining} of ${capacity}` : 'Fully booked';
+            }
+
+            // Drag & Drop events
+            dropzone.addEventListener('dragover', e=> e.preventDefault());
+            dropzone.addEventListener('drop', e=>{
+                e.preventDefault();
+                const guestId = parseInt(e.dataTransfer.getData('guestId'));
+                if(!guestId) return;
+                if(guestAssignments[room.id].includes(guestId)) return;
+
+                if(guestAssignments[room.id].length >= capacity){
+                    Swal.fire({icon:'warning', title:'Room Full'});
+                    return;
+                }
+
+                guestAssignments[room.id].push(guestId);
+                tripGuests = tripGuests.filter(g=>g.id!==guestId);
+                renderGuestPool();
+                renderGuests();
+            });
+
+            // Initial render
+            renderGuests();
+        });
     });
+}
 
-    renderRoomsByBoat(slot);
-});
-
-
-   // Add Guest via modal
     $('#guestForm').on('submit', function (e) {
         e.preventDefault();
-
         const form = $(this);
-
         $.ajax({
             url: '{{ route("admin.guests.store") }}',
             method: 'POST',
@@ -804,21 +805,29 @@ function renderRoomsByBoat(slot) {
         });
     });
 
-    roomMessage.style.display = 'block';
+    new Choices(vesselsSelect, {removeItemButton:true, searchEnabled:true, shouldSort:false, placeholder:true, placeholderValue:'Select vessels'});
 
-    /* -----------------------------
-       PRICE USD
-    ------------------------------ */
+    // -------------------------
+    // AGENT/SOURCE TOGGLE
+    // -------------------------
+    function toggleAgent(){
+        agentSelect.disabled = sourceSelect.value !== 'Agent';
+        if(agentSelect.disabled) agentSelect.value='';
+    }
+    toggleAgent();
+    sourceSelect.addEventListener('change', toggleAgent);
+
+    // -------------------------
+    // PRICE USD CALCULATION
+    // -------------------------
     const priceInput = document.getElementById('price');
     const currencySelect = document.getElementById('currency');
     const priceUsdInput = document.getElementById('price_usd');
-
     function updateUSD(){
         const rate = parseFloat(currencySelect.selectedOptions[0].dataset.rate);
-        const price = parseFloat(priceInput.value) || 0;
-        priceUsdInput.value = (price * rate).toFixed(2);
+        const price = parseFloat(priceInput.value)||0;
+        priceUsdInput.value = (price*rate).toFixed(2);
     }
-
     priceInput.addEventListener('input', updateUSD);
     currencySelect.addEventListener('change', updateUSD);
     updateUSD();
