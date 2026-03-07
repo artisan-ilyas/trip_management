@@ -123,7 +123,7 @@ class BookingController extends Controller
         return view('admin.booking.create', [
             'slots' => $slots->toArray(),
             'agents' => Agent::orderBy('first_name')->get(),
-            'guests' => Guest::orderBy('name')->get(),
+            'guests' => Guest::orderBy('first_name')->get(),
             'ratePlans' => RatePlan::with('rules')->get(),
             'paymentPolicies' => PaymentPolicy::all(),
             'cancellationPolicies' => CancellationPolicy::with('rules')->get(),
@@ -154,8 +154,8 @@ class BookingController extends Controller
         $validator = Validator::make($request->all(), [
             'source' => 'required|in:Direct,Agent',
             'agent_id' => 'nullable|required_if:source,Agent',
-            'guest_rooms' => 'nullable|array',
-            'guests_without_room' => 'nullable|array',
+            'lead_customer_id' => 'required|exists:guests,id',
+            'guest_rooms' => 'nullable',
             'price' => 'required|numeric',
             'currency' => 'required',
             'salesperson_id' => 'required',
@@ -179,9 +179,23 @@ class BookingController extends Controller
             return back()->withErrors($validator)->withInput();
         }
 
+        $guestRooms = [];
+
+        if ($request->guest_rooms) {
+
+            foreach ($request->guest_rooms as $roomId => $guestString) {
+
+                $ids = array_filter(explode(',', $guestString));
+
+                if ($ids) {
+                    $guestRooms[$roomId] = $ids;
+                }
+            }
+        }
+
         DB::beginTransaction();
 
-        try {
+        // try {
 
             // ------------------------------
             // STEP 1: RESOLVE OR CREATE SLOT
@@ -266,46 +280,47 @@ class BookingController extends Controller
             // ------------------------------
             // SLOT ROOM CAPACITY CHECK
             // ------------------------------
-            $usedRoomCapacity =
-                BookingGuestRoom::whereIn(
-                    'booking_id',
-                    Booking::where('slot_id', $slot->id)->pluck('id')
-                )
-                ->select('room_id', DB::raw('COUNT(*) as used'))
-                ->groupBy('room_id')
-                ->pluck('used', 'room_id')
-                ->toArray();
+   $usedRoomCapacity =
+BookingGuestRoom::whereIn(
+    'booking_id',
+    Booking::where('slot_id', $slot->id)->pluck('id')
+)
+->select('room_id', DB::raw('COUNT(*) as used'))
+->groupBy('room_id')
+->pluck('used', 'room_id')
+->toArray();
 
-            if ($request->filled('guest_rooms')) {
+            // if ($request->filled('guest_rooms')) {
 
-                $rooms = Room::whereIn('id', array_keys($request->guest_rooms))
-                    ->get()
-                    ->keyBy('id');
+            //     $rooms = Room::whereIn('id', array_keys($request->guest_rooms))
+            //         ->get()
+            //         ->keyBy('id');
 
-                foreach ($request->guest_rooms as $roomId => $guestIds) {
+            //     foreach ($request->guest_rooms as $roomId => $guestIds) {
 
-                    $guestIds = array_filter((array) $guestIds);
-                    if (empty($guestIds)) continue;
+            //         $guestIds = array_filter((array) $guestIds);
+            //         if (empty($guestIds)) continue;
 
-                    if (!isset($rooms[$roomId])) {
-                        DB::rollBack();
-                        return back()->withErrors([
-                            'guest_rooms' => 'Invalid room selected'
-                        ])->withInput();
-                    }
+            //         if (!isset($rooms[$roomId])) {
+            //             DB::rollBack();
+            //             return back()->withErrors([
+            //                 'guest_rooms' => 'Invalid room selected'
+            //             ])->withInput();
+            //         }
 
-                    $room = $rooms[$roomId];
-                    $capacity = $room->capacity + $room->extra_beds;
-                    $alreadyUsed = $usedRoomCapacity[$roomId] ?? 0;
+            //         $room = $rooms[$roomId];
+            //         $capacity = $room->capacity + $room->extra_beds;
+            //         $alreadyUsed = $usedRoomCapacity[$roomId] ?? 0;
 
-                    if (($alreadyUsed + count($guestIds)) > $capacity) {
-                        DB::rollBack();
-                        return back()->withErrors([
-                            'guest_rooms' => "Room capacity exceeded."
-                        ])->withInput();
-                    }
-                }
-            }
+
+            //         if (($alreadyUsed + count($guestIds)) > $capacity) {
+            //             DB::rollBack();
+            //             return back()->withErrors([
+            //                 'guest_rooms' => "Room capacity exceeded."
+            //             ])->withInput();
+            //         }
+            //     }
+            // }
 
             // ------------------------------
             // COLLECT GUEST IDS
@@ -324,7 +339,7 @@ class BookingController extends Controller
                 ])->withInput();
             }
 
-            $leadGuest = Guest::find($guestIds[0]);
+            $leadGuest = Guest::findOrFail($request->lead_customer_id);
 
             if (!$leadGuest) {
                 DB::rollBack();
@@ -342,7 +357,7 @@ class BookingController extends Controller
                 'room_id' => $slotType === 'Private Charter'
                     ? null
                     : array_key_first($request->guest_rooms ?? []),
-                'guest_name' => $leadGuest->name,
+                'guest_name' => $leadGuest->first_name.' '.$leadGuest->last_name,
                 'guest_count' => count($guestIds),
                 'source' => $request->source,
                 'agent_id' => $request->agent_id,
@@ -360,12 +375,14 @@ class BookingController extends Controller
             // ------------------------------
             // ATTACH ROOMS & GUESTS
             // ------------------------------
-            if ($request->filled('guest_rooms')) {
+            if (!empty($guestRooms)) {
 
-                $booking->rooms()->sync(array_keys($request->guest_rooms));
+                $booking->rooms()->sync(array_keys($guestRooms));
 
-                foreach ($request->guest_rooms as $roomId => $gIds) {
-                    foreach ((array) $gIds as $guestId) {
+                foreach ($guestRooms as $roomId => $gIds) {
+
+                    foreach ($gIds as $guestId) {
+
                         BookingGuestRoom::create([
                             'booking_id' => $booking->id,
                             'room_id' => $roomId,
@@ -401,15 +418,15 @@ class BookingController extends Controller
                 ->route('admin.bookings.index')
                 ->with('success', 'Booking created successfully');
 
-        } catch (\Throwable $e) {
+        // } catch (\Throwable $e) {
 
-            DB::rollBack();
-            report($e);
+        //     DB::rollBack();
+        //     report($e);
 
-            return back()->withErrors([
-                'error' => 'Something went wrong while creating the booking.'
-            ])->withInput();
-        }
+        //     return back()->withErrors([
+        //         'error' => 'Something went wrong while creating the booking.'
+        //     ])->withInput();
+        // }
     }
 
 
