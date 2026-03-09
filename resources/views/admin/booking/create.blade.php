@@ -270,6 +270,22 @@
                             <input type="number" name="price_usd" id="price_usd" class="form-control" readonly>
                         </div>
                     </div>
+                    
+                    {{-- Deposit / Payment Section --}}
+                    <div class="row mb-3">
+                        <div class="col-md-4 mb-3">
+                            <label>Deposit Amount</label>
+                            <input type="number" name="deposit_amount" class="form-control" step="0.01" value="{{ old('deposit_amount') }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Deposit Due Date</label>
+                            <input type="date" name="deposit_due_date" class="form-control" value="{{ old('deposit_due_date') }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label>Final Balance Due Date</label>
+                            <input type="date" name="final_balance_due_date" class="form-control" value="{{ old('final_balance_due_date') }}">
+                        </div>
+                    </div>
 
                    <div class="card p-3 mb-3">
                     <h5>Trip Guests</h5>

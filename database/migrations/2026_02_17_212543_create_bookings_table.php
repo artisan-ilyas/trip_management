@@ -15,11 +15,13 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->string('guest_name');
 
-            $table->string('status')->default('pending');
+            $table->enum('status', ['Pending', 'DP Paid', 'Full Paid', 'Cancelled','Waiting List'])->default('Pending');
 
             $table->decimal('price', 12, 2)->nullable();
             $table->decimal('price_usd', 12, 2)->nullable();
             $table->string('currency', 3)->nullable();
+            $table->decimal('exchange_rate', 12, 6)->nullable();
+            $table->timestamp('exchange_rate_timestamp')->nullable();
 
             // Relationships
             $table->foreignId('agent_id')->nullable()->constrained()->nullOnDelete();
@@ -31,6 +33,10 @@ return new class extends Migration
             $table->foreignId('rate_plan_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('payment_policy_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('cancellation_policy_id')->nullable()->constrained()->nullOnDelete();
+
+            $table->decimal('deposit_amount', 12, 2)->nullable();
+            $table->date('deposit_due_date')->nullable();
+            $table->date('final_balance_due_date')->nullable();
 
             $table->foreignId('salesperson_id')->nullable()->constrained('users')->nullOnDelete();
 
