@@ -348,6 +348,12 @@ BookingGuestRoom::whereIn(
                 ])->withInput();
             }
 
+
+            $currency = Currency::findOrFail($request->currency);
+
+            $rate = (float) $currency->rate;
+            $price = (float) $request->price;
+
             // ------------------------------
             // CREATE BOOKING
             // ------------------------------
@@ -357,7 +363,7 @@ BookingGuestRoom::whereIn(
                 'room_id' => $slotType === 'Private Charter'
                     ? null
                     : array_key_first($request->guest_rooms ?? []),
-                'guest_name' => $leadGuest->first_name.' '.$leadGuest->last_name,
+                'guest_name' => $leadGuest->first_name . ' ' . $leadGuest->last_name,
                 'guest_count' => count($guestIds),
                 'source' => $request->source,
                 'agent_id' => $request->agent_id,
@@ -366,10 +372,22 @@ BookingGuestRoom::whereIn(
                 'cancellation_policy_id' => $request->cancellation_policy_id,
                 'notes' => $request->notes,
                 'status' => $request->booking_status,
-                'price' => $request->price,
-                'currency' => $request->currency,
+                // pricing
+                'price' => $price,
+                'currency' => $currency->name,
+
+                // frozen exchange rate
+                'exchange_rate' => $rate,
+                'exchange_rate_timestamp' => now(),
+
+                'deposit_amount' => $request->deposit_amount,
+                'deposit_due_date' => $request->deposit_due_date,
+                'final_balance_due_date' => $request->final_balance_due_date,
+
+                // USD conversion
+                'price_usd' => round($price * $rate, 2),
+
                 'salesperson_id' => $request->salesperson_id,
-                'price_usd' => $request->price_usd,
             ]);
 
             // ------------------------------

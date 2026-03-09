@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 @section('content')
 <div class="content-wrapper">
-    <div class="container pt-3">
+    <div class="container-fluid pt-3"> {{-- use container-fluid for full width --}}
         <div class="d-flex justify-content-between mb-3">
             <h4>Bookings</h4>
             <a href="{{ route('admin.bookings.create') }}" class="btn btn-primary">Create Booking</a>
@@ -15,8 +15,9 @@
             @endif
         @endforeach
 
-        <table class="table table-bordered table-striped align-middle">
-            <thead class="table-light text-uppercase small">
+        <div class="table-responsive"> {{-- wrap table with responsive div --}}
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-light text-uppercase small">
                     <tr>
                         <th>ID</th>
                         <th>Slot</th>
@@ -34,42 +35,42 @@
                     <tr>
                         <td>{{ $booking->id }}</td>
                         <td>#{{ $booking->slot_id }}</td>
-                    <td>
-                        @if(!empty($booking->boats) && $booking->boats->count() > 0)
-                            <ul class="mb-0">
-                                @foreach($booking->boats as $boat)
-                                    <li>{{ $boat->name }}</li>
-                                @endforeach
-                            </ul>
-                        @else
-                            {{ $booking->boat->name ?? '-' }}
-                        @endif
-                    </td>
-
-                    <td>
-                        @if(!empty($booking->rooms) && $booking->rooms->count() > 0)
-                            <ul class="mb-0">
-                                @foreach($booking->rooms as $room)
-                                    <li>{{ $room->room_name }}</li>
-                                @endforeach
-                            </ul>
-                        @else
-                            {{ $booking->room->room_name ?? '-' }}
-                        @endif
-                    </td>
-
-                        <td>{{ $booking->guest_name }}</td>
-                    <td>
-                        @if($booking->slot)
-                            {{ $booking->slot->start_date->format('d-m-Y') }} → {{ $booking->slot->end_date->format('d-m-Y') }}
-                        @else
-                            -
-                        @endif
-                    </td>
-                        <td>{{ $booking->price_usd }}</td>
-                        <td>{{ $booking->status }}</td>
                         <td>
+                            @if(!empty($booking->boats) && $booking->boats->count() > 0)
+                                <ul class="mb-0">
+                                    @foreach($booking->boats as $boat)
+                                        <li>{{ $boat->name }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                {{ $booking->boat->name ?? '-' }}
+                            @endif
+                        </td>
+                        <td>
+                            @if(!empty($booking->rooms) && $booking->rooms->count() > 0)
+                                <ul class="mb-0">
+                                    @foreach($booking->rooms as $room)
+                                        <li>{{ $room->room_name }}</li>
+                                    @endforeach
+                                </ul>
+                            @else
+                                {{ $booking->room->room_name ?? '-' }}
+                            @endif
+                        </td>
+                        <td>{{ $booking->guest_name }}</td>
+                        <td>
+                            @if($booking->slot)
+                                {{ \Carbon\Carbon::parse($booking->slot->start_date)->format('d-m-Y') }} →
+                                {{ \Carbon\Carbon::parse($booking->slot->end_date)->format('d-m-Y') }}
+                            @else
+                                -
+                            @endif
+                        </td>
+                        <td>{{ $booking->price_usd }}</td>
+                        <td>{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</td>
+                        <td class="text-nowrap"> {{-- prevents buttons from stacking --}}
                             <a href="{{ route('admin.bookings.edit', $booking) }}" class="btn btn-sm btn-warning">Edit</a>
+                            <a href="{{ route('admin.bookings.payments.index', $booking) }}" class="btn btn-sm btn-info">Payments</a>
                             <form method="POST" action="{{ route('admin.bookings.destroy', $booking) }}" class="d-inline" onsubmit="return confirm('Delete this booking?')">
                                 @csrf
                                 @method('DELETE')
@@ -79,7 +80,8 @@
                     </tr>
                     @endforeach
                 </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 </div>
 @endsection

@@ -36,6 +36,7 @@ use App\Http\Controllers\Admin\{
     PortController,
     SlotController,
     BookingController as AdminBookingController,
+    BookingPaymentsController,
     CurrencyController,
     TemplateController,
     SalespersonController
@@ -114,6 +115,15 @@ Route::post('guest/form/{token}', [GuestController::class, 'submit'])->name('gue
                     Route::post('waiting-lists/{waitingList}/notify', [WaitingListController::class, 'notify'])->name('waitinglists.notify');
                     Route::get('waiting-lists/{waitingList}/convert', [WaitingListController::class, 'convertToBooking'])->name('waitinglists.convert');
                     Route::post('waiting-lists/{waitingList}/mark-converted', [WaitingListController::class, 'markConverted'])->name('waitinglists.markConverted');
+
+                    Route::get('bookings/{booking}/payments', [BookingPaymentsController::class,'index'])->name('bookings.payments.index');
+                    Route::post('bookings/{booking}/payments', [BookingPaymentsController::class,'store'])->name('bookings.payments.store');
+                    Route::get('bookings/payments/{payment}/invoice', [BookingPaymentsController::class,'invoice'])->name('bookings.payments.invoice');
+                });
+
+                Route::prefix('admin/slots/{slot}/documents')->name('admin.slots.documents.')->group(function () {
+                    Route::get('/harbormaster', [\App\Http\Controllers\Admin\SlotDocumentsController::class, 'harbormasterManifest'])->name('harbormaster');
+                    Route::get('/crew-guest-sheet', [\App\Http\Controllers\Admin\SlotDocumentsController::class, 'crewGuestSheet'])->name('crew_guest_sheet');
                 });
 
             /*
@@ -229,6 +239,10 @@ Route::post('guest/form/{token}', [GuestController::class, 'submit'])->name('gue
             */
             Route::get('audits', [AuditController::class, 'index'])->name('audit.index');
 
+        });
+
+        Route::get('/test', function () {
+            return view('test');
         });
 
         /*

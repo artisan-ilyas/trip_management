@@ -7,7 +7,7 @@ use App\Traits\Auditable;
 class Booking extends Model
 {
     use Auditable;
-    
+
     protected $fillable = [
         'source',
         'agent_id',
@@ -23,7 +23,12 @@ class Booking extends Model
         'cancellation_policy_id',
         'price',
         'currency',
+        'exchange_rate',
+        'exchange_rate_timestamp',
         'salesperson_id',
+        'deposit_amount',
+        'deposit_due_date',
+        'final_balance_due_date',
         'price_usd',
     ];
 
@@ -85,11 +90,37 @@ class Booking extends Model
 
     public function guests()
     {
-        return $this->belongsToMany(Guest::class);
+        return $this->belongsToMany(
+            Guest::class,
+            'booking_guest_room', // pivot table
+            'booking_id',         // foreign key on pivot pointing to Booking
+            'guest_id'            // foreign key on pivot pointing to Guest
+        );
     }
 
     public function guestRoomAssignments()
     {
         return $this->hasMany(BookingGuestRoom::class);
     }
+
+        public function installments()
+    {
+        return $this->hasMany(BookingInstallment::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(BookingPayment::class);
+    }
+
+    public function getAmountPaidAttribute()
+    {
+        return $this->payments()->sum('amount');
+    }
+
+    public function getBalanceDueAttribute()
+    {
+        return $this->price - $this->amount_paid;
+    }
+
 }
