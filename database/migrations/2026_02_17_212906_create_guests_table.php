@@ -27,6 +27,12 @@ return new class extends Migration
 
             $table->text('address')->nullable();
 
+            $table->text('dietary_requirements')->nullable();
+            $table->text('allergies')->nullable();
+            $table->string('equipment_sizes')->nullable();
+            $table->text('operational_notes')->nullable();
+
+
             $table->timestamps();
 
             // Optional but useful indexes

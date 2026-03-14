@@ -11,7 +11,8 @@ class Guest extends Model
 
     protected $fillable = [
         'gender', 'email', 'dob', 'passport',
-        'company_id','phone','address','first_name','last_name'
+        'company_id','phone','address','first_name','last_name',
+        'dietary_requirements','allergies','equipment_sizes','operational_notes'
     ];
 
     public function booking()

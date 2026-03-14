@@ -83,21 +83,40 @@
                                 @endforeach
                             </select>
                         </div>
-                    <div class="col-md-6 mb-3">
-                        <label>Slot</label>
+                        <div class="col-md-6 mb-3">
+                            <label>Slot</label>
                             <select id="slotSelect" name="slot_id" class="form-control">
                                 <option value="">-- Select Slot --</option>
 
                                 @foreach($slots as $slot)
                                     @php
-                                        $isDisabled = in_array($slot['id'], $bookedSlotIds);
                                         $slotType = $slot['slot_type'] ?? 'Open Trip';
+
+                                        // Private charter booked
+                                        $isPrivateBooked = in_array($slot['id'], $bookedSlotIds);
+
+                                        // Check if all rooms are full
+                                        $rooms = $roomUsageBySlot[$slot['id']] ?? [];
+                                        $totalRooms = count($rooms);
+                                        $fullRooms = 0;
+
+                                        foreach($rooms as $room) {
+                                            if(($room['used'] ?? 0) >= 1) {
+                                                $fullRooms++;
+                                            }
+                                        }
+
+                                        $isRoomFull = ($totalRooms > 0 && $fullRooms >= $totalRooms);
+
+                                        // Final disable condition
+                                        $isDisabled = $isPrivateBooked || $isRoomFull;
                                     @endphp
 
                                     <option value="{{ $slot['id'] }}"
-                                            data-json='@json($slot)'
-                                            @if($isDisabled) disabled style="color: gray;" @endif
+                                        data-json='@json($slot)'
+                                        @if($isDisabled) disabled style="color: gray;" @endif
                                     >
+
                                         {{-- Boat names --}}
                                         @if(!empty($slot['boats']) && count($slot['boats']) >= 1)
                                             {{ collect($slot['boats'])->pluck('name')->join(', ') }}
@@ -110,13 +129,18 @@
                                         | {{ \Carbon\Carbon::parse($slot['start_date'])->format('d-m-Y') }}
                                         → {{ \Carbon\Carbon::parse($slot['end_date'])->format('d-m-Y') }}
 
-                                        @if($isDisabled && $slotType === 'Private Charter')
-                                            (Booked)
+                                        @if($isPrivateBooked)
+                                            (Private Charter Booked)
+                                        @elseif($isRoomFull)
+                                            (Fully Booked)
                                         @endif
+
                                     </option>
                                 @endforeach
+
                             </select>
-                    </div>
+                        </div>
+
 
                     {{-- Source --}}
                     <div class="col-md-6 mb-3">
