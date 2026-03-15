@@ -3,72 +3,118 @@
 @section('content')
 <div class="content-wrapper">
 <div class="container pt-3">
-    <h4>Add Guest</h4>
-    @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
 
-    @if ($errors->any())
-        <div class="alert alert-danger">
-            <ul class="mb-0">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
+<h4>Add Guest</h4>
+
+@if(session('success'))
+<div class="alert alert-success">{{ session('success') }}</div>
+@endif
+
+@if ($errors->any())
+<div class="alert alert-danger">
+<ul class="mb-0">
+@foreach ($errors->all() as $error)
+<li>{{ $error }}</li>
+@endforeach
+</ul>
+</div>
+@endif
+
+<form action="{{ route('admin.guests.store') }}" method="POST">
+@csrf
+
+<div class="card mb-4">
+<div class="card-header">
+<strong>Guest Information</strong>
+</div>
+
+<div class="card-body">
+<div class="row">
+
+<div class="col-md-6 mb-3">
+<label>First Name</label>
+<input type="text" name="first_name" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Last Name</label>
+<input type="text" name="last_name" class="form-control" required>
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Gender</label>
+<select name="gender" class="form-control" required>
+<option value="">Select</option>
+<option>Male</option>
+<option>Female</option>
+</select>
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Email</label>
+<input type="email" name="email" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Passport</label>
+<input type="text" name="passport" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Phone</label>
+<input type="text" name="phone" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Date of Birth</label>
+<input type="date" name="dob" class="form-control">
+</div>
+
+<div class="col-md-6 mb-3">
+<label>Address</label>
+<input type="text" name="address" class="form-control">
+</div>
+
+</div>
+</div>
+</div>
 
 
-    <form action="{{ route('admin.guests.store') }}" method="POST">
-        @csrf
+<div class="card mb-4">
+<div class="card-header">
+<strong>Health & Special Requirements</strong>
+</div>
 
-        <div class="mb-3">
-            <label>First Name</label>
-            <input type="text" name="first_name" class="form-control" required>
-        </div>
+<div class="card-body">
 
-        <div class="mb-3">
-            <label>Last Name</label>
-            <input type="text" name="last_name" class="form-control" required>
-        </div>
+<div class="mb-3">
+<label>Dietary Requirements</label>
+<textarea name="dietary_requirements" class="form-control" rows="3"></textarea>
+</div>
 
-        <div class="mb-3">
-            <label>Gender</label>
-            <select name="gender" class="form-control" required>
-                <option value="">Select</option>
-                <option>Male</option>
-                <option>Female</option>
-            </select>
-        </div>
+<div class="mb-3">
+<label>Allergies</label>
+<textarea name="allergies" class="form-control" rows="3"></textarea>
+</div>
 
-        <div class="mb-3">
-            <label>Email</label>
-            <input type="email" name="email" class="form-control">
-        </div>
+<div class="mb-3">
+<label>Equipment Sizes</label>
+<input type="text" name="equipment_sizes" class="form-control">
+</div>
 
-        <div class="mb-3">
-            <label>Passport</label>
-            <input type="text" name="passport" class="form-control">
-        </div>
+<div class="mb-3">
+<label>Operational Notes</label>
+<textarea name="operational_notes" class="form-control" rows="3"></textarea>
+</div>
 
-        <div class="mb-3">
-            <label>Phone</label>
-            <input type="text" name="phone" class="form-control">
-        </div>
+</div>
+</div>
 
-        <div class="mb-3">
-            <label>Address</label>
-            <input type="text" name="address" class="form-control">
-        </div>
+<button class="btn btn-success">Save</button>
+<a href="{{ route('admin.guests.index') }}" class="btn btn-secondary">Cancel</a>
 
-        <div class="mb-3">
-            <label>Date of Birth</label>
-            <input type="date" name="dob" class="form-control">
-        </div>
+</form>
 
-        <button class="btn btn-success">Save</button>
-        <a href="{{ route('admin.guests.index') }}" class="btn btn-secondary">Cancel</a>
-    </form>
 </div>
 </div>
 @endsection

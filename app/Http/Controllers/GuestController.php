@@ -33,11 +33,16 @@ class GuestController extends Controller
             'address'    => 'nullable|string|max:255',
             'company_id' => 'nullable|integer',
             'dob'        => 'nullable|date',
+
+            // NEW FIELDS
+            'dietary_requirements' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'equipment_sizes' => 'nullable|string|max:255',
+            'operational_notes' => 'nullable|string',
         ]);
 
         $guest = Guest::create($data);
 
-        // Check if AJAX request
         if ($request->ajax()) {
             return response()->json([
                 'id' => $guest->id,
@@ -45,11 +50,11 @@ class GuestController extends Controller
             ]);
         }
 
-        // Fallback for normal form submission
         return redirect()
             ->route('admin.guests.index')
             ->with('success', 'Guest created successfully');
     }
+
 
 
     // EDIT
@@ -71,6 +76,12 @@ class GuestController extends Controller
             'address'    => 'nullable|string|max:255',
             'company_id' => 'nullable|integer',
             'dob'        => 'nullable|date',
+
+            // NEW FIELDS
+            'dietary_requirements' => 'nullable|string',
+            'allergies' => 'nullable|string',
+            'equipment_sizes' => 'nullable|string|max:255',
+            'operational_notes' => 'nullable|string',
         ]);
 
         $guest->update($data);
@@ -79,6 +90,7 @@ class GuestController extends Controller
             ->route('admin.guests.index')
             ->with('success', 'Guest updated successfully');
     }
+
 
     public function destroy(Guest $guest)
     {
