@@ -460,42 +460,41 @@ document.addEventListener('DOMContentLoaded', function() {
         renderGuestPool();
     });
 
-    // -------------------------
-    // TRIP GUEST POOL
-    // -------------------------
-    function renderGuestPool() {
-        const pool = document.getElementById('tripGuestPool');
-        pool.innerHTML='';
-        tripGuests.forEach(g=>{
-            const div=document.createElement('div');
-            div.className='guest-card';
-            div.draggable=true;
-            div.dataset.id=g.id;
-            div.innerText=g.first_name+" "+g.last_name;
-            div.addEventListener('dragstart', e=>{
-                e.dataTransfer.setData('guestId', g.id);
+        // -------------------------
+        // TRIP GUEST POOL
+        // -------------------------
+        function renderGuestPool() {
+            const pool = document.getElementById('tripGuestPool');
+            pool.innerHTML='';
+            tripGuests.forEach(g=>{
+                const div=document.createElement('div');
+                div.className='guest-card';
+                div.draggable=true;
+                div.dataset.id=g.id;
+                div.innerText=g.first_name+" "+g.last_name;
+                div.addEventListener('dragstart', e=>{
+                    e.dataTransfer.setData('guestId', g.id);
+                });
+                pool.appendChild(div);
             });
-            pool.appendChild(div);
-        });
-    }
+        }
 
-    Object.values(bookingRoomGuests).flat().forEach(id=>{
-    tripGuests = tripGuests.filter(g => g.id != id);
-});
+        Object.values(bookingRoomGuests).flat().forEach(id=>{
+        tripGuests = tripGuests.filter(g => g.id != id);
+    });
 
     renderGuestPool(); // preload existing trip guests
 
         // Auto render rooms for current booking slot
-const bookingSlotId = "{{ $booking->slot_id }}";
-alert(bookingSlotId);
-if(bookingSlotId){
-    const slot = slots.find(s => s.id == bookingSlotId);
-    console.log(slot);
-    if(slot){
-        renderRoomsBySlot(slot);
-        toggleInlineFields(false);
+    const bookingSlotId = "{{ $booking->slot_id }}";
+    if(bookingSlotId){
+        const slot = slots.find(s => s.id == bookingSlotId);
+        console.log(slot);
+        if(slot){
+            renderRoomsBySlot(slot);
+            toggleInlineFields(false);
+        }
     }
-}
 
     // -------------------------
     // INLINE SLOT TOGGLE
