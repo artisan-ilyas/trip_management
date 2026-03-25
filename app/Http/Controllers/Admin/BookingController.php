@@ -478,11 +478,11 @@ class BookingController extends Controller
 
 public function edit(Booking $booking)
 {
-    // Load all slots with boats and rooms
+    // Load all slots with main boat and additional boats including rooms
     $slots = Slot::with(['boat.rooms', 'boats.rooms'])->get();
 
     // Slots already booked by PRIVATE CHARTER (excluding current booking)
-    $bookedSlotIds = Booking::where('bookings.id', '!=', $booking->id) // <-- specify table
+    $bookedSlotIds = Booking::where('bookings.id', '!=', $booking->id)
         ->leftJoin('slots', 'bookings.slot_id', '=', 'slots.id')
         ->whereNotNull('bookings.slot_id')
         ->where('slots.slot_type', 'Private Charter')
@@ -490,11 +490,11 @@ public function edit(Booking $booking)
         ->unique()
         ->toArray();
 
-    // Room usage per slot (per booking) including guest IDs
+    // Room usage per slot including guest IDs
     $roomUsageBySlot = [];
 
     foreach ($slots as $slot) {
-        // Only active bookings (exclude cancelled), exclude current booking
+        // Active bookings in this slot, excluding current booking
         $bookingIds = Booking::where('slot_id', $slot->id)
             ->where('id', '!=', $booking->id)
             ->whereIn('status', ['Pending', 'DP Paid', 'Full Paid'])
@@ -518,61 +518,54 @@ public function edit(Booking $booking)
             })
             ->toArray();
 
-        // Initialize room usage for this slot
         $roomUsageBySlot[$slot->id] = [];
 
-        // Process rooms for main boat
-        foreach ($slot->boat->rooms ?? [] as $room) {
-            $roomId = $room->id;
-            $roomUsageBySlot[$slot->id][$roomId] = [
-                'used' => $roomUsage[$roomId] ?? 0,
-                'guests' => [],
-            ];
+        // Function to process rooms for a boat
+        $processRooms = function ($boat) use (&$roomUsageBySlot, $slot, $roomGuests, $bookingIds, $roomUsage) {
+            if (!$boat || !$boat->rooms) return;
 
-            // Merge guest IDs per booking
-            foreach ($bookingIds as $bId) {
-                $key = $bId . '_' . $roomId;
-                if (isset($roomGuests[$key])) {
-                    $roomUsageBySlot[$slot->id][$roomId]['guests'] = array_merge(
-                        $roomUsageBySlot[$slot->id][$roomId]['guests'],
-                        $roomGuests[$key]
-                    );
-                }
-            }
-        }
+            foreach ($boat->rooms as $room) {
+                $roomId = $room->id;
+                $roomUsageBySlot[$slot->id][$roomId] = [
+                    'used' => $roomUsage[$roomId] ?? 0,
+                    'guests' => [],
+                ];
 
-        // Process rooms for additional boats linked to the slot
-        if ($slot->boats) {
-            foreach ($slot->boats as $boat) {
-                foreach ($boat->rooms ?? [] as $room) {
-                    $roomId = $room->id;
-                    $roomUsageBySlot[$slot->id][$roomId] = [
-                        'used' => $roomUsage[$roomId] ?? 0,
-                        'guests' => [],
-                    ];
-
-                    foreach ($bookingIds as $bId) {
-                        $key = $bId . '_' . $roomId;
-                        if (isset($roomGuests[$key])) {
-                            $roomUsageBySlot[$slot->id][$roomId]['guests'] = array_merge(
-                                $roomUsageBySlot[$slot->id][$roomId]['guests'],
-                                $roomGuests[$key]
-                            );
-                        }
+                // Merge guest IDs from existing bookings
+                foreach ($bookingIds as $bId) {
+                    $key = $bId . '_' . $roomId;
+                    if (isset($roomGuests[$key])) {
+                        $roomUsageBySlot[$slot->id][$roomId]['guests'] = array_merge(
+                            $roomUsageBySlot[$slot->id][$roomId]['guests'],
+                            $roomGuests[$key]
+                        );
                     }
                 }
+            }
+        };
+
+        // Process main boat and additional boats
+        $processRooms($slot->boat);
+        if ($slot->boats) {
+            foreach ($slot->boats as $boat) {
+                $processRooms($boat);
             }
         }
     }
 
-    // Preload current booking's guest-room assignments
+    // Preload current booking's guest-room assignments keyed by boatId_roomId
     $bookingGuestRooms = BookingGuestRoom::where('booking_id', $booking->id)->get();
+
     $bookingRoomGuests = $bookingGuestRooms
-    ->groupBy('room_id')
-    ->map(function ($items) {
-        return $items->pluck('guest_id')->toArray();
-    })
-    ->toArray();
+        ->groupBy(function ($item) {
+            return $item->room->boat_id . '_' . $item->room_id;
+        })
+        ->map(function ($items) {
+            return $items->pluck('guest_id')->toArray();
+        })
+        ->toArray();
+
+    // Preload booking guests for JS
     $bookingGuests = $bookingGuestRooms->map(function ($bgr) {
         $guest = $bgr->guest; // assuming relation exists
         return [
@@ -601,8 +594,8 @@ public function edit(Booking $booking)
 
         'bookedSlotIds' => $bookedSlotIds,
         'roomUsageBySlot' => $roomUsageBySlot,
-        'bookingGuests' => $bookingGuests, // preload guests already on this booking
-        'bookingRoomGuests' => $bookingRoomGuests, // preload guest-room assignments for this booking
+        'bookingGuests' => $bookingGuests,
+        'bookingRoomGuests' => $bookingRoomGuests,
     ]);
 }
 
@@ -738,10 +731,20 @@ public function update(Request $request, Booking $booking)
             $status = 'Pending';
         }
 
+        $firstRoomId = null;
+
+        if (!empty($guestRooms)) {
+            // guestRooms keys are in "boatId_roomId" format
+            // extract the room ID from the first key
+            $firstKey = array_key_first($guestRooms); // e.g., "4_44"
+            $parts = explode('_', $firstKey);
+            $firstRoomId = (int) ($parts[1] ?? null); // the actual room ID as integer
+        }
+
         $booking->update([
             'slot_id' => $slot->id,
             'boat_id' => $slot->boats->first()->id ?? null,
-            'room_id' => $slotType === 'Private Charter' ? null : array_key_first($request->guest_rooms ?? []),
+            'room_id' => $slotType === 'Private Charter' ? null : $firstRoomId,
             'guest_name' => $leadGuest->first_name . ' ' . $leadGuest->last_name,
             'guest_count' => count($guestIds),
             'source' => $request->source,
@@ -789,14 +792,25 @@ public function update(Request $request, Booking $booking)
         // ------------------------------
         // ATTACH ROOMS & GUESTS
         // ------------------------------
-        $booking->rooms()->sync(array_keys($guestRooms));
+        $roomIds = array_map(function($key) {
+            $parts = explode('_', $key);
+            return (int) ($parts[1] ?? null);
+        }, array_keys($guestRooms));
+
+        // Sync only valid room IDs
+        $booking->rooms()->sync($roomIds);
         BookingGuestRoom::where('booking_id', $booking->id)->delete();
 
-        foreach ($guestRooms as $roomId => $gIds) {
+        foreach ($guestRooms as $roomKey => $gIds) {
+            // Extract only the numeric room ID
+            $parts = explode('_', $roomKey);
+            $roomId = (int) ($parts[1] ?? null); // second part is the room ID
+            if (!$roomId) continue; // skip invalid
+
             foreach ($gIds as $guestId) {
                 BookingGuestRoom::create([
                     'booking_id' => $booking->id,
-                    'room_id' => $roomId,
+                    'room_id' => $roomId, // now integer
                     'guest_id' => $guestId,
                 ]);
             }

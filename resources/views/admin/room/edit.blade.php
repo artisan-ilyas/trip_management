@@ -61,6 +61,7 @@
                        class="form-control"
                        value="{{ old('capacity', $room->capacity) }}"
                        min="1"
+                       max="20"
                        required>
             </div>
 
