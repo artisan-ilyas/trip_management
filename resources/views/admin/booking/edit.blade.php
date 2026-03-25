@@ -159,91 +159,7 @@
             </div>
 
             {{-- Inline Slot --}}
-            <div id="inlineSlotWrapper" class="border p-3 mb-3">
-                <h5>Inline Slot Creation</h5>
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Slot Type</label>
-                        <select name="slot_type" class="form-control">
-                            @foreach(['Open Trip','Private Charter','Maintenance','Docking','Crossing'] as $type)
-                                <option value="{{ $type }}" {{ $booking->slot_type==$type?'selected':'' }}>{{ $type }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Status</label>
-                        <select name="slot_status" class="form-control">
-                            @foreach(['Available','On-Hold','Blocked'] as $status)
-                                <option value="{{ $status }}" {{ $booking->slot_status==$status?'selected':'' }}>{{ $status }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
 
-                {{-- Vessels + Region --}}
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Vessels</label>
-                        <select name="boats_allowed[]" id="inlineBoatsAllowed" class="form-control" multiple>
-                            @foreach($boats as $boat)
-                                <option value="{{ $boat->id }}" {{ in_array($boat->id, $bookingBoats ?? [])?'selected':'' }}>
-                                    {{ $boat->name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Region</label>
-                        <select name="region_id" class="form-control">
-                            @foreach($regions as $region)
-                                <option value="{{ $region->id }}" {{ $booking->region_id==$region->id?'selected':'' }}>{{ $region->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                {{-- Ports --}}
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Departure Port</label>
-                        <select name="departure_port_id" class="form-control">
-                            @foreach($ports as $port)
-                                <option value="{{ $port->id }}" {{ $booking->departure_port_id==$port->id?'selected':'' }}>{{ $port->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label>Arrival Port</label>
-                        <select name="arrival_port_id" class="form-control">
-                            @foreach($ports as $port)
-                                <option value="{{ $port->id }}" {{ $booking->arrival_port_id==$port->id?'selected':'' }}>{{ $port->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-
-                {{-- Dates --}}
-                <div class="row mb-3">
-                    <div class="col-md-6">
-                        <label>Start Date</label>
-                        <input type="date" name="start_date" id="inlineStartDate" class="form-control" value="{{ $booking->start_date }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label>Duration (Nights)</label>
-                        <input type="number" name="duration_nights" id="inlineDurationNights" class="form-control" min="0" value="{{ $booking->duration_nights }}">
-                    </div>
-                    <div class="col-md-3">
-                        <label>End Date</label>
-                        <input type="date" name="end_date" id="inlineEndDate" class="form-control" readonly value="{{ $booking->end_date }}">
-                    </div>
-                </div>
-
-                {{-- Notes --}}
-                <div class="mb-3">
-                    <label>Notes</label>
-                    <textarea name="notes" class="form-control">{{ $booking->notes }}</textarea>
-                </div>
-            </div>
 
             {{-- Price / Deposit --}}
             <div class="row">
@@ -383,18 +299,15 @@
 <script>
 document.addEventListener('DOMContentLoaded', function() {
 
-
     // -------------------------
     // GLOBAL VARIABLES
     // -------------------------
     let tripGuests = @json($bookingGuests); // preloaded guests already on this booking
-    let roomAssignments = {}; // track guests assigned to rooms in this session
-    let bookingRoomGuests = @json($bookingRoomGuests ?? []);
-
+    let bookingRoomGuests = @json($bookingRoomGuests ?? []); // preloaded guest-room assignments keyed by boatId_roomId
     const slots = @json($slots);
     const guests = @json($guests);
     const roomUsageBySlot = @json($roomUsageBySlot);
-    const boatsWithRooms = @json($boats); // include rooms relation
+    const boatsWithRooms = @json($boats);
 
     // -------------------------
     // ELEMENTS
@@ -402,17 +315,12 @@ document.addEventListener('DOMContentLoaded', function() {
     const slotSelect = document.getElementById('slotSelect');
     const roomWrapper = document.getElementById('roomWrapper');
     const roomMessage = document.getElementById('roomMessage');
-    const inlineSlotWrapper = document.getElementById('inlineSlotWrapper');
-    const inlineStart = document.getElementById('inlineStartDate');
-    const inlineDuration = document.getElementById('inlineDurationNights');
-    const inlineEnd = document.getElementById('inlineEndDate');
-    const vesselsSelect = document.getElementById('inlineBoatsAllowed');
     const guestSelector = document.getElementById('guestSelector');
     const agentSelect = document.getElementById('agentSelect');
     const sourceSelect = document.getElementById('sourceSelect');
 
     // -------------------------
-    // GUEST SELECTOR
+    // CUSTOMER & GUEST SELECTORS
     // -------------------------
     new Choices('#customerSelect', {
         searchEnabled: true,
@@ -421,38 +329,32 @@ document.addEventListener('DOMContentLoaded', function() {
         placeholderValue: 'Search customer...'
     });
 
-    const guestChoices = new Choices(guestSelector,{
-        searchEnabled:true,
-        removeItemButton:false,
-        shouldSort:false,
-        placeholder:true,
-        placeholderValue:'Search guest'
+    const guestChoices = new Choices(guestSelector, {
+        searchEnabled: true,
+        removeItemButton: false,
+        shouldSort: false,
+        placeholder: true,
+        placeholderValue: 'Search guest'
     });
 
     // Populate guest selector
     guestChoices.setChoices(
-        guests.map(g=>({
-            value:g.id,
-            label:`${g.first_name} ${g.last_name}`
-        })),
-        'value','label',true
+        guests.map(g => ({ value: g.id, label: g.first_name + ' ' + g.last_name })),
+        'value', 'label', true
     );
 
     // Add "Add New Guest" option
-    guestChoices.setChoices([{
-        value:'add_new_guest',
-        label:'➕ Add New Guest'
-    }],'value','label',false);
+    guestChoices.setChoices([{ value: 'add_new_guest', label: '➕ Add New Guest' }], 'value', 'label', false);
 
     guestSelector.addEventListener('change', function() {
         const id = this.value;
-        if(id === 'add_new_guest'){
+        if (id === 'add_new_guest') {
             new bootstrap.Modal(document.getElementById('guestModal')).show();
             return;
         }
         const guest = guests.find(g => g.id == id);
-        if(!guest) return;
-        if(tripGuests.find(g => g.id == id)){
+        if (!guest) return;
+        if (tripGuests.find(g => g.id == id)) {
             Swal.fire('Guest already added');
             return;
         }
@@ -460,143 +362,75 @@ document.addEventListener('DOMContentLoaded', function() {
         renderGuestPool();
     });
 
-        // -------------------------
-        // TRIP GUEST POOL
-        // -------------------------
-        function renderGuestPool() {
-            const pool = document.getElementById('tripGuestPool');
-            pool.innerHTML='';
-            tripGuests.forEach(g=>{
-                const div=document.createElement('div');
-                div.className='guest-card';
-                div.draggable=true;
-                div.dataset.id=g.id;
-                div.innerText=g.first_name+" "+g.last_name;
-                div.addEventListener('dragstart', e=>{
-                    e.dataTransfer.setData('guestId', g.id);
-                });
-                pool.appendChild(div);
+    // -------------------------
+    // TRIP GUEST POOL
+    // -------------------------
+    function renderGuestPool() {
+        const pool = document.getElementById('tripGuestPool');
+        pool.innerHTML = '';
+        tripGuests.forEach(g => {
+            const div = document.createElement('div');
+            div.className = 'guest-card';
+            div.draggable = true;
+            div.dataset.id = g.id;
+            div.innerText = g.first_name + " " + g.last_name;
+            div.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('guestId', g.id);
             });
-        }
+            pool.appendChild(div);
+        });
+    }
 
-        Object.values(bookingRoomGuests).flat().forEach(id=>{
+    // Remove guests already assigned in rooms from tripGuests
+    Object.values(bookingRoomGuests).flat().forEach(id => {
         tripGuests = tripGuests.filter(g => g.id != id);
     });
 
-    renderGuestPool(); // preload existing trip guests
-
-        // Auto render rooms for current booking slot
-    const bookingSlotId = "{{ $booking->slot_id }}";
-    if(bookingSlotId){
-        const slot = slots.find(s => s.id == bookingSlotId);
-        console.log(slot);
-        if(slot){
-            renderRoomsBySlot(slot);
-            toggleInlineFields(false);
-        }
-    }
+    renderGuestPool();
 
     // -------------------------
-    // INLINE SLOT TOGGLE
+    // RENDER ROOMS BY SLOT
     // -------------------------
-    function toggleInlineFields(active){
-        const fields = inlineSlotWrapper.querySelectorAll('input, select, textarea');
-        fields.forEach(f=>{
-            if(active){
-                f.setAttribute('required','required');
-                f.disabled=false;
-            }else{
-                f.removeAttribute('required');
-                f.disabled=true;
-            }
-        });
-        inlineSlotWrapper.style.display = active ? 'block' : 'none';
-    }
-
-    toggleInlineFields(!slotSelect.value);
-
-
-
-    // -------------------------
-    // INLINE DATE CALCULATION
-    // -------------------------
-    const today = new Date().toISOString().split('T')[0];
-    inlineStart.setAttribute('min', today);
-
-    function calculateInlineEndDate(){
-        if(!inlineStart.value || !inlineDuration.value) return;
-        const startDate = new Date(inlineStart.value);
-        const nights = parseInt(inlineDuration.value);
-        const endDate = new Date(startDate);
-        endDate.setDate(endDate.getDate() + nights);
-        inlineEnd.valueAsDate = endDate;
-    }
-
-    inlineStart.addEventListener('change', calculateInlineEndDate);
-    inlineDuration.addEventListener('input', calculateInlineEndDate);
-    calculateInlineEndDate();
-
-
-
-    // -------------------------
-    // SLOT SELECT CHANGE
-    // -------------------------
-    slotSelect.addEventListener('change', function(){
-        const slotId = this.value;
-        const slot = slots.find(s=>s.id==slotId);
-
-        if(slot){
-            toggleInlineFields(false);
-            renderRoomsBySlot(slot);
-        }else{
-            toggleInlineFields(true);
-            roomWrapper.innerHTML='';
-            roomMessage.textContent='Please select a slot to see rooms.';
-            roomMessage.style.display='block';
-        }
-    });
-
-    // -------------------------
-    // RENDER ROOMS FOR EDIT MODE
-    // -------------------------
-    function renderRoomsBySlot(slot){
-        roomWrapper.innerHTML='';
-        roomMessage.style.display='block';
+    function renderRoomsBySlot(slot) {
+        roomWrapper.innerHTML = '';
+        roomMessage.style.display = 'block';
 
         const isPrivate = slot.slot_type === 'Private Charter';
         roomMessage.textContent = isPrivate
             ? 'Private Charter: room assignment is optional.'
             : 'Open Trip: assign any available rooms.';
 
-        let guestAssignments={};
+        let guestAssignments = {}; // key: boatId_roomId
 
-        function addRooms(boat){
-            if(!boat.rooms || !boat.rooms.length) return;
-            const boatHeader=document.createElement('div');
-            boatHeader.className='col-12 mb-2';
-            boatHeader.innerHTML=`<strong>Boat: ${boat.name}</strong>`;
+        function addRooms(boat) {
+            if (!boat.rooms || !boat.rooms.length) return;
+
+            const boatHeader = document.createElement('div');
+            boatHeader.className = 'col-12 mb-2';
+            boatHeader.innerHTML = `<strong>Boat: ${boat.name}</strong>`;
             roomWrapper.appendChild(boatHeader);
 
-            boat.rooms.forEach(room=>{
-                const cap = parseInt(room.capacity||0)+parseInt(room.extra_beds||0);
+            boat.rooms.forEach(room => {
+                const cap = parseInt(room.capacity || 0) + parseInt(room.extra_beds || 0);
+                const roomKey = `${boat.id}_${room.id}`;
                 const usage = roomUsageBySlot?.[slot.id]?.[room.id] || {};
-                const previousGuests = (usage.guests||[]).map(id=>parseInt(id));
+                const previousGuests = (usage.guests || []).map(id => parseInt(id));
 
-                let assigned = bookingRoomGuests?.[room.id] || [];
-                guestAssignments[room.id] = [...previousGuests, ...assigned];
+                const assigned = bookingRoomGuests?.[roomKey] || [];
+                guestAssignments[roomKey] = [...previousGuests, ...assigned];
 
                 const div = document.createElement('div');
-                div.className='col-md-4 mb-3';
+                div.className = 'col-md-4 mb-3';
                 div.innerHTML = `
-                    <label class="card p-2 h-100">
+                    <label class="card p-2 h-100 ${assigned.length>0?'':'bg-light'}">
                         <strong>${room.room_name}</strong>
                         <small class="text-muted room-capacity mt-1"></small>
-                        <div class="room-dropzone mt-2"
-                            data-room="${room.id}"
+                        <div class="room-dropzone mt-2 ${assigned.length>0?'':'disabled-room'}"
+                            data-room-key="${roomKey}"
                             data-cap="${cap}"
                             style="min-height:90px;border:2px dashed #ccc;border-radius:6px;padding:8px;">
                         </div>
-                        <input type="hidden" class="room-input" name="guest_rooms[${room.id}]">
+                        <input type="hidden" class="room-input" name="guest_rooms[${roomKey}]">
                     </label>
                 `;
                 roomWrapper.appendChild(div);
@@ -604,31 +438,29 @@ document.addEventListener('DOMContentLoaded', function() {
                 const dropzone = div.querySelector('.room-dropzone');
                 const hiddenInput = div.querySelector('.room-input');
                 const capacityText = div.querySelector('.room-capacity');
-                const fullMsg = div.querySelector('.room-full');
 
-                function renderGuests(){
-                    dropzone.innerHTML='';
-                    guestAssignments[room.id].forEach(id=>{
-                        const guest = guests.find(g=>g.id==id);
-                        if(!guest) return;
+                function renderGuests() {
+                    dropzone.innerHTML = '';
+                    guestAssignments[roomKey].forEach(id => {
+                        const guest = guests.find(g => g.id == id);
+                        if (!guest) return;
 
                         const isExisting = previousGuests.includes(id);
-
                         const badge = document.createElement('span');
-                        badge.className='badge me-1 mb-1';
+                        badge.className = 'badge me-1 mb-1';
                         badge.style.background = isExisting ? '#6c757d' : '#0d6efd';
                         badge.style.cursor = isExisting ? 'not-allowed' : 'pointer';
-                        badge.textContent = (guest.first_name+' '+guest.last_name).trim() + (isExisting ? '' : ' ×');
+                        badge.textContent = guest.first_name + ' ' + guest.last_name + (isExisting ? '' : ' ×');
 
-                        if(!isExisting){
-                            badge.onclick=()=>{
+                        if (!isExisting) {
+                            badge.onclick = () => {
                                 Swal.fire({
-                                    title:'Remove guest?',
-                                    icon:'warning',
-                                    showCancelButton:true
-                                }).then(res=>{
-                                    if(!res.isConfirmed) return;
-                                    guestAssignments[room.id] = guestAssignments[room.id].filter(gid=>gid!==id);
+                                    title: 'Remove guest?',
+                                    icon: 'warning',
+                                    showCancelButton: true
+                                }).then(res => {
+                                    if (!res.isConfirmed) return;
+                                    guestAssignments[roomKey] = guestAssignments[roomKey].filter(gid => gid !== id);
                                     tripGuests.push(guest);
                                     renderGuestPool();
                                     updateAllRooms();
@@ -639,40 +471,29 @@ document.addEventListener('DOMContentLoaded', function() {
                         dropzone.appendChild(badge);
                     });
 
-                    // Only include newly added guests in hidden input
-                    hiddenInput.value = guestAssignments[room.id].filter(id=>!previousGuests.includes(id)).join(',');
+                    hiddenInput.value = guestAssignments[roomKey].filter(id => !previousGuests.includes(id)).join(',');
 
-                    const used = guestAssignments[room.id].length;
-                    const remaining = cap-used;
-                    capacityText.textContent = remaining>0 ? `Remaining ${remaining} of ${cap}` : 'Fully booked';
-                    fullMsg.style.display = remaining<=0 ? 'block':'none';
+                    const used = guestAssignments[roomKey].length;
+                    const remaining = cap - used;
+                    capacityText.textContent = remaining > 0 ? `Remaining ${remaining} of ${cap}` : 'Fully booked';
                 }
 
-                dropzone.addEventListener('dragover', e=>{ e.preventDefault(); });
-                dropzone.addEventListener('drop', e=>{
+                dropzone.addEventListener('dragover', e => e.preventDefault());
+                dropzone.addEventListener('drop', e => {
                     e.preventDefault();
-                    const guestId=parseInt(e.dataTransfer.getData('guestId'));
-                    if(!guestId) return;
-                    if(guestAssignments[room.id].includes(guestId)) return;
-
-                    if(previousGuests.length){
-                        Swal.fire({icon:'warning', title:'Room already booked', text:'Guests from previous booking occupy this room.'});
+                    const guestId = parseInt(e.dataTransfer.getData('guestId'));
+                    if (!guestId) return;
+                    if (guestAssignments[roomKey].includes(guestId)) return;
+                    if (previousGuests.length) {
+                        Swal.fire({ icon: 'warning', title: 'Room already booked', text: 'Guests from previous booking occupy this room.' });
                         return;
                     }
-
-                    if(!isPrivate && guestAssignments[room.id].length >= cap){
-                        Swal.fire({icon:'warning', title:'Room Full'});
+                    if (!isPrivate && guestAssignments[roomKey].length >= cap) {
+                        Swal.fire({ icon: 'warning', title: 'Room Full' });
                         return;
                     }
-
-                    Object.keys(guestAssignments).forEach(rid=>{
-                        if(!roomUsageBySlot?.[slot.id]?.[rid]) {
-                            guestAssignments[rid] = guestAssignments[rid].filter(id=>id!==guestId);
-                        }
-                    });
-
-                    guestAssignments[room.id].push(guestId);
-                    tripGuests = tripGuests.filter(g=>g.id!==guestId);
+                    guestAssignments[roomKey].push(guestId);
+                    tripGuests = tripGuests.filter(g => g.id !== guestId);
                     renderGuestPool();
                     updateAllRooms();
                 });
@@ -682,28 +503,51 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
 
-        function updateAllRooms(){
-            document.querySelectorAll('#roomWrapper .col-md-4').forEach(room=>{
-                if(room.updateRoomState) room.updateRoomState();
+        if (slot.boat) addRooms(slot.boat);
+        if (slot.boats) slot.boats.forEach(addRooms);
+
+        function updateAllRooms() {
+            document.querySelectorAll('#roomWrapper .col-md-4').forEach(room => {
+                if (room.updateRoomState) room.updateRoomState();
             });
         }
 
-        if(slot.boat) addRooms(slot.boat);
-        if(slot.boats) slot.boats.forEach(addRooms);
         updateAllRooms();
     }
 
     // -------------------------
+    // AUTO-LOAD CURRENT BOOKING SLOT
+    // -------------------------
+    const bookingSlotId = "{{ $booking->slot_id }}";
+    if (bookingSlotId) {
+        const slot = slots.find(s => s.id == bookingSlotId);
+        if (slot) renderRoomsBySlot(slot);
+    }
+
+    // -------------------------
+    // SLOT SELECT CHANGE
+    // -------------------------
+    slotSelect.addEventListener('change', function() {
+        const slotId = this.value;
+        const slot = slots.find(s => s.id == slotId);
+        if (slot) {
+            renderRoomsBySlot(slot);
+        } else {
+            roomWrapper.innerHTML = '';
+            roomMessage.textContent = 'Please select a slot to see rooms.';
+            roomMessage.style.display = 'block';
+        }
+    });
+
+    // -------------------------
     // AGENT/SOURCE TOGGLE
     // -------------------------
-    function toggleAgent(){
+    function toggleAgent() {
         agentSelect.disabled = sourceSelect.value !== 'Agent';
-        if(agentSelect.disabled) agentSelect.value='';
+        if (agentSelect.disabled) agentSelect.value = '';
     }
     toggleAgent();
     sourceSelect.addEventListener('change', toggleAgent);
-
-
 
     // -------------------------
     // PRICE USD CALCULATION
@@ -711,10 +555,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const priceInput = document.getElementById('price');
     const currencySelect = document.getElementById('currency');
     const priceUsdInput = document.getElementById('price_usd');
-    function updateUSD(){
+
+    function updateUSD() {
         const rate = parseFloat(currencySelect.selectedOptions[0].dataset.rate);
-        const price = parseFloat(priceInput.value)||0;
-        priceUsdInput.value = (price*rate).toFixed(2);
+        const price = parseFloat(priceInput.value) || 0;
+        priceUsdInput.value = (price * rate).toFixed(2);
     }
     priceInput.addEventListener('input', updateUSD);
     currencySelect.addEventListener('change', updateUSD);

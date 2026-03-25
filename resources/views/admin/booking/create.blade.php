@@ -871,6 +871,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     new Choices(vesselsSelect, {removeItemButton:true, searchEnabled:true, shouldSort:false, placeholder:true, placeholderValue:'Select vessels'});
 
+vesselsSelect.addEventListener('change', function () {
+    const selected = Array.from(this.options)
+        .filter(option => option.selected)
+        .map(option => parseInt(option.value));
+
+    renderRoomsForInlineBoats(selected);
+});
     // -------------------------
     // AGENT/SOURCE TOGGLE
     // -------------------------

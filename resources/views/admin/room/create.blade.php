@@ -50,8 +50,8 @@
                 <input type="number"
                        name="capacity"
                        class="form-control"
-                       value="0"
-                       min="0">
+                       min="1"
+                       max="20" required>
             </div>
 
             <div class="mb-3">
