@@ -28,6 +28,7 @@ class RoomController extends Controller
         $request->validate([
             'boat_id' => 'required|exists:boats,id',
             'name' => 'required',
+            'capacity' => 'required|max:20',
         ]);
 
         Room::create([
