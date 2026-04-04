@@ -860,16 +860,21 @@ public function update(Request $request, Booking $booking)
         return back()->with('success', 'Booking deleted successfully.');
     }
 
-    protected function hasBoatDateCollision(array $boatIds, string $startDate, string $endDate): bool
-    {
-        return Slot::whereIn('boat_id', $boatIds)
-            ->where(function($query) use ($startDate, $endDate) {
-                $query->whereBetween('start_date', [$startDate, $endDate])
-                    ->orWhereBetween('end_date', [$startDate, $endDate])
-                    ->orWhere(function($q) use ($startDate, $endDate) {
-                        $q->where('start_date', '<=', $startDate)
-                            ->where('end_date', '>=', $endDate);
-                    });
+   private function hasBoatDateCollision(
+        array $boatIds,
+        string $startDate,
+        string $endDate,
+        ?int $ignoreSlotId = null
+    ): bool {
+        return Slot::whereHas('boats', function ($q) use ($boatIds) {
+                $q->whereIn('boats.id', $boatIds);
+            })
+            ->when($ignoreSlotId, fn ($q) =>
+                $q->where('id', '!=', $ignoreSlotId)
+            )
+            ->where(function ($q) use ($startDate, $endDate) {
+                $q->whereDate('start_date', '<=', $startDate)
+                ->whereDate('end_date', '>=', $endDate);
             })
             ->exists();
     }

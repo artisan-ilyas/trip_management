@@ -182,8 +182,8 @@ class SlotController extends Controller
                 $q->where('id', '!=', $ignoreSlotId)
             )
             ->where(function ($q) use ($startDate, $endDate) {
-                $q->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
+                $q->whereDate('start_date', '<=', $startDate)
+                ->whereDate('end_date', '>=', $endDate);
             })
             ->exists();
     }
