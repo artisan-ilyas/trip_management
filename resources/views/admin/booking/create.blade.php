@@ -84,7 +84,7 @@
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label>Slot</label>
+                           <label>Slot</label>
                             <select id="slotSelect" name="slot_id" class="form-control">
                                 <option value="">-- Select Slot --</option>
 
@@ -108,8 +108,13 @@
 
                                         $isRoomFull = ($totalRooms > 0 && $fullRooms >= $totalRooms);
 
+                                        // ✅ Disable if start date is today or past
+                                        $isPastOrToday = \Carbon\Carbon::parse($slot['start_date'])
+                                                            ->startOfDay()
+                                                            ->lte(\Carbon\Carbon::today());
+
                                         // Final disable condition
-                                        $isDisabled = $isPrivateBooked || $isRoomFull;
+                                        $isDisabled = $isPrivateBooked || $isRoomFull || $isPastOrToday;
                                     @endphp
 
                                     <option value="{{ $slot['id'] }}"
@@ -133,6 +138,8 @@
                                             (Private Charter Booked)
                                         @elseif($isRoomFull)
                                             (Fully Booked)
+                                        @elseif($isPastOrToday)
+                                            (Expired)
                                         @endif
 
                                     </option>
