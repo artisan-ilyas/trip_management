@@ -68,14 +68,37 @@
                         </td>
                         <td>{{ $booking->price_usd }}</td>
                         <td>{{ ucfirst(str_replace('_', ' ', $booking->status)) }}</td>
-                        <td class="text-nowrap"> {{-- prevents buttons from stacking --}}
-                            <a href="{{ route('admin.bookings.edit', $booking) }}" class="btn btn-sm btn-warning">Edit</a>
-                            <a href="{{ route('admin.bookings.payments.index', $booking) }}" class="btn btn-sm btn-info">Payments</a>
-                            <form method="POST" action="{{ route('admin.bookings.destroy', $booking) }}" class="d-inline" onsubmit="return confirm('Delete this booking?')">
+                        <td class="text-nowrap">
+                            <a href="{{ route('admin.bookings.edit', $booking) }}"
+                            class="btn btn-sm btn-warning">
+                                Edit
+                            </a>
+
+                            <a href="{{ route('admin.bookings.payments.index', $booking) }}"
+                            class="btn btn-sm btn-info">
+                                Payments
+                            </a>
+
+                            <!-- ✅ ADD THIS BUTTON -->
+                            <a href="{{ route('bookings.guests', $booking->id) }}"
+                            class="btn btn-sm btn-dark">
+                                Guests
+                            </a>
+
+                            <form method="POST"
+                                action="{{ route('admin.bookings.destroy', $booking) }}"
+                                class="d-inline"
+                                onsubmit="return confirm('Delete this booking?')">
+
                                 @csrf
                                 @method('DELETE')
-                                <button class="btn btn-sm btn-danger">Delete</button>
+
+                                <button class="btn btn-sm btn-danger">
+                                    Delete
+                                </button>
+
                             </form>
+
                         </td>
                     </tr>
                     @endforeach

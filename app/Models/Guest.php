@@ -41,6 +41,16 @@ class Guest extends Model
         );
     }
 
+    public function bookingGuests()
+    {
+        return $this->hasMany(BookingGuest::class);
+    }
+
+    public function documents()
+    {
+        return $this->hasMany(GuestDocument::class);
+    }
+
     // Computed full name (VERY useful everywhere)
     public function getNameAttribute()
     {

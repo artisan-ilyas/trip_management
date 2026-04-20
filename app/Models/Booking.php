@@ -120,7 +120,22 @@ class Booking extends Model
 
     public function getBalanceDueAttribute()
     {
-        return $this->price_usd - $this->amount_paid;
+        return $this->price - $this->amount_paid;
+    }
+
+    public function bookingGuests()
+    {
+        return $this->hasMany(BookingGuest::class);
+    }
+
+    public function leadGuest()
+    {
+        return $this->belongsTo(Guest::class, 'lead_guest_id');
+    }
+
+    public function travelDetails()
+    {
+        return $this->hasMany(BookingTravelDetail::class);
     }
 
 }
