@@ -33,11 +33,13 @@
     <div class="row g-3 mb-4">
         @php
             $summary = [
-                ['title'=>'Total Price','value'=>$booking->price_usd,'icon'=>'fa-dollar-sign','color'=>'text-primary'],
+                ['title'=>'Total Price','value'=>$booking->price,'icon'=>'fa-dollar-sign','color'=>'text-primary'],
                 ['title'=>'Deposit','value'=>$booking->deposit_amount ?? 0,'icon'=>'fa-hand-holding-dollar','color'=>'text-warning','extra'=>'Due: '.($booking->deposit_due_date ? \Carbon\Carbon::parse($booking->deposit_due_date)->format('d-m-Y') : '-')],
                 ['title'=>'Paid','value'=>$booking->amount_paid,'icon'=>'fa-money-bill-wave','color'=>'text-success'],
-                ['title'=>'Balance Due','value'=>$booking->balance_due,'icon'=> $booking->balance_due <=0 ? 'fa-check-circle' : 'fa-exclamation-circle','color'=>$booking->balance_due <=0 ? 'text-success' : 'text-danger','progress'=>($booking->amount_paid / $booking->price_usd)*100]
+                ['title'=>'Balance Due','value'=>$booking->balance_due,'icon'=> $booking->balance_due <=0 ? 'fa-check-circle' : 'fa-exclamation-circle','color'=>$booking->balance_due <=0 ? 'text-success' : 'text-danger','progress'=>($booking->amount_paid / $booking->price)*100]
             ];
+            $currencies = \App\Models\Currency::all();
+            $curr = \App\Models\Currency::firstWhere('id', $booking->currency) ?? $currencies->firstWhere('name', $booking->currency);
         @endphp
 
         @foreach($summary as $card)
@@ -46,7 +48,7 @@
                 <div class="card-body text-center d-flex flex-column justify-content-between" style="min-height: 180px;">
                     <div>
                         <small class="text-muted">{{ $card['title'] }}</small>
-                        <h5 class="mt-2 fw-bold">{{ $card['value'] }} USD</h5>
+                        <h5 class="mt-2 fw-bold">{{ $card['value'] }} {{ $booking->currency == $curr->id || $booking->currency == $curr->name ? $curr->symbol : '' }}</h5>
                         @if(isset($card['extra']))<small class="text-muted d-block">{{ $card['extra'] }}</small>@endif
                         @if(isset($card['progress']))
                         <div class="progress my-2" style="height:10px;border-radius:10px;">

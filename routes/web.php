@@ -9,6 +9,7 @@ use App\Http\Controllers\{
     AuditController,
     BoatController,
     BookingController,
+    BookingGuestController,
     CalendarController,
     CancellationPolicyController,
     CancellationPolicyRuleController,
@@ -162,6 +163,22 @@ Route::post('guest/form/{token}', [GuestController::class, 'submit'])->name('gue
                 Route::post('agents/{agent}/assign-trips', [AgentController::class, 'assignTrips'])->name('agents.assignTrips');
             });
 
+
+            Route::prefix('bookings/{booking}')->group(function () {
+
+                Route::get('/guests', [BookingGuestController::class, 'index'])->name('bookings.guests');
+                Route::get('/guests/{bookingGuest}', [BookingGuestController::class, 'show'])->name('bookings.guests.show');
+                Route::post('/guests/{bookingGuest}/profile', [BookingGuestController::class, 'updateProfile']);
+                Route::post('/guests/{bookingGuest}/travel', [BookingGuestController::class, 'saveTravel']);
+                Route::post('/guests/{bookingGuest}/medical', [BookingGuestController::class, 'saveMedical']);
+                Route::post('/guests/{bookingGuest}/food', [BookingGuestController::class, 'saveFood']);
+                Route::post('/guests/{bookingGuest}/drink', [BookingGuestController::class, 'saveDrink']);
+                Route::post('/guests/{bookingGuest}/housekeeping', [BookingGuestController::class, 'saveHousekeeping']);
+                Route::post('/guests/{bookingGuest}/service', [BookingGuestController::class, 'saveService']);
+                Route::post('/guests/{bookingGuest}/diving', [BookingGuestController::class, 'saveDiving']);
+                Route::post('/guests/{bookingGuest}/surfing', [BookingGuestController::class, 'saveSurfing']);
+                Route::post('/guests/{bookingGuest}/documents', [BookingGuestController::class, 'saveDocument']);
+            });
             /*
             |--------------------------------------------------------------------------
             | Finance

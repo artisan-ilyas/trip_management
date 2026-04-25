@@ -171,7 +171,7 @@
                     <label>Currency</label>
                     <select id="currency" name="currency" class="form-control">
                         @foreach($currencies as $curr)
-                            <option value="{{ $curr->id }}" data-rate="{{ $curr->rate }}" {{ $booking->currency_id==$curr->id?'selected':'' }}>
+                            <option value="{{ $curr->id }}" data-rate="{{ $curr->rate }}" {{ $booking->currency==$curr->id || ($booking->currency == $curr->name)?'selected':'' }}>
                                 {{ $curr->symbol }} - {{ $curr->name }} Rate: {{ $curr->rate }} USD
                             </option>
                         @endforeach

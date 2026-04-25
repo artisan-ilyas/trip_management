@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class BookingGuestFoodPreference extends Model
+class BookingGuestFoodPreferences extends Model
 {
     protected $fillable = [
         'booking_guest_id',
