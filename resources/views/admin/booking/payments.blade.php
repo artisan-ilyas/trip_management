@@ -75,7 +75,7 @@
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Amount</label>
-                        <input type="number" name="amount" id="amount" class="form-control form-control-lg" step="0.01" placeholder="Enter amount in USD" required>
+                        <input type="number" name="amount" id="amount" class="form-control form-control-lg" step="0.01" placeholder="Enter amount in {{ $booking->currency == $curr->id || $booking->currency == $curr->name ? $curr->name : '' }}" required>
                     </div>
                     <div class="col-md-4">
                         <label class="form-label fw-semibold">Paid At</label>
