@@ -32,14 +32,17 @@ class BookingGuestController extends Controller
             'documents'
         ]);
 
-        $arrival = $bookingGuest->travelDetails->where('direction', 'arrival')->first();
-        $departure = $bookingGuest->travelDetails->where('direction', 'departure')->first();
+        // REMOVE old logic ❌
+        // $arrival = ...
+        // $departure = ...
+
+        $travels = $bookingGuest->travelDetails->sortByDesc('date');
+
 
         return view('admin.booking.guests.show', compact(
             'booking',
             'bookingGuest',
-            'arrival',
-            'departure'
+            'travels'
         ));
     }
 

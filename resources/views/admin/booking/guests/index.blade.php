@@ -110,5 +110,39 @@ document.addEventListener('DOMContentLoaded', function () {
         first.click();
     }
 });
+function initTravelToggle() {
+    const type = document.getElementById('travel_type');
+    if (!type) return; // prevent crash if tab not loaded yet
 
+    const flight = document.getElementById('flight_fields');
+    const hotel = document.getElementById('hotel_fields');
+    const other = document.getElementById('other_fields');
+
+    function toggle() {
+
+        // hide all
+        if (flight) flight.style.display = 'none';
+        if (hotel) hotel.style.display = 'none';
+        if (other) other.style.display = 'none';
+
+        // show based on type
+        if (type.value === 'flight' && flight) flight.style.display = 'block';
+        if (type.value === 'hotel' && hotel) hotel.style.display = 'block';
+        if (type.value === 'other' && other) other.style.display = 'block';
+    }
+
+    // remove old listeners (important if re-init)
+    type.removeEventListener('change', toggle);
+    type.addEventListener('change', toggle);
+
+    toggle();
+}
+
+// run on page load
+document.addEventListener('DOMContentLoaded', initTravelToggle);
+
+// 🔥 VERY IMPORTANT (Bootstrap tab fix)
+document.addEventListener('shown.bs.tab', function () {
+    initTravelToggle();
+});
 </script>
